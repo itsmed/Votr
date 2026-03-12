@@ -2,7 +2,7 @@
 
 A full stack application using the [Congress.gov](https://api.congress.gov/) API
 which allows users to search for congressional representatives, bills, view
-details, and vote on them.
+details, vote on bills, and compare their votes to their representatives' voting history. The application will have a Tinder-like interface for swiping through bills and voting on them, as well as features for tracking voting history, receiving notifications about upcoming votes, and sharing opinions on social media. The goal of the application is to increase civic engagement and make it easier for users to stay informed about legislative activities and participate in the democratic process.
 
 ## Features
 
@@ -26,62 +26,69 @@ details, and vote on them.
 - Users can participate in discussions and forums related to bills and legislation to engage with other users and share their opinions.
 - Users can access educational resources and information about the legislative process to better understand how Congress works and how they can get involved.
 - Users can track the progress of bills they are interested in and receive updates on their status.
-- Users can view detailed profiles of their representatives, including their voting records, stances on key issues, and contact information to better understand their representatives and hold them accountable.
+- Users can view detailed profiles of their representatives, including their
+  voting records, stances on key issues, and contact information to better
+  understand their representatives and hold them accountable.
+- There is a civics quiz feature that allows users to test their knowledge of the legislative process, key issues, and their representatives to promote civic education and engagement.
 - Users can provide feedback and suggestions for improving the application and its features to help shape the future development of PollUs and ensure that it meets the needs and preferences of its users.
 
 ## Technologies Used
-- Frontend: Typescript, React, Tailwind CSS
-- Backend: Typescript/Node.js, Express
-- Testing: Jest, React Testing Library
+- Language: Typescript
+- Framework: NextJS (^16.1.6), App Router
+- Styling: Tailwind CSS
+- Component Library: shadcn/ui
+- Data Fetching: React Query
+- Testing: Jest + React Testing Library
+- Backend: Express.js
 - API: Congress.gov API
-- Storage: PostgreSQL
+- Storage: Supabase PostgreSQL in production. In development use a Postgres
+  instance running in a Docker container.
+- Package Management: pnpm preferred
+- Linting: ESLint
+- Formatting: Prettier
 
-## Project Structure
+## Installation Notes
 
-```
-pollus/
-| docs/
-│   ├── api/
-│   │   ├── congress.gov.md
-│   │   └── README.md
-│   ├── architecture.md
-│   └── README.md
-├── backend/
-│   ├── src/
-│   │   ├── controllers/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   ├── services/
-│   │   ├── utils/
-│   │   ├── app.ts
-│   │   └── server.ts
-│   ├── tests/
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   ├── utils/
-│   │   ├── App.tsx
-│   │   └── index.tsx
-│   ├── tests/
-│   ├── package.json
-│   └── tsconfig.json
-├── README.md
-|-- claude.md
-└── .gitignore
-```
+- Tailwind setup with postcss
+- shadcn/ui installed with npx shadcn-ui@latest init
+- React Query initialized with <QueryClientProvider>
+
+## Dev Commands
+
+- Dev server: pnpm dev
+- Build: pnpm build
+- Start: pnpm start
+- Lint: pnpm lint
+- Format: pnpm format
+- Test: pnpm test
+
+# Dev Cycle
+
+1. Plan and design features and components based on user needs and project
+   goals.
+2. Write tests for new features and components before implementation to ensure test coverage
+   and catch potential issues early.
+3. Implement features and components following coding conventions and best practices.
+4. Run tests to verify that new code works as expected and does not introduce
+   regressions.
+5. Refactor code as needed to improve readability, maintainability, and performance.
+6. Update documentation to reflect new features, components, and any changes to
+   existing functionality. Update *why* decisions were made, not just *what* was done.
 
 ## docs folder
 The `docs` folder contains documentation for the project, including API
-documentation, architectural decisions, and any other relevant information. It
+documentation, architectural decisions. It
 is organized into subfolders for different types of documentation. Keep this
 documentation up-to-date as the project evolves, and ensure that it is clear and
 comprehensive for future reference and onboarding. Also any learnings
 accumulated by Claude during the development process should be documented here
 for future reference.
+
+## Security
+
+- Validate all server-side inputs (API routes)
+- Use HTTPS-only cookies and CSRF tokens when applicable
+- Protect sensitive routes with middleware or session logic
 
 ## Coding conventions
 
@@ -95,6 +102,19 @@ for future reference.
 - Use PropTypes for type checking in React components.
 - Use environment variables for sensitive information (e.g., API keys).
 - Use ESLint and Prettier for code formatting and linting on save.
+- Prefer arrow functions
+- Annotate return types
+- Always destructure props
+- Avoid any type, use unknown or strict generics
+- Group imports: react → next → libraries → local
+
+# React Query Patterns
+
+- Set up QueryClient in app/layout.tsx
+- Use useQuery, useMutation, useInfiniteQuery from @tanstack/react-query
+- Place API logic in /lib/api/ and call via hooks
+- Use query keys prefixed by domain: ['user', id]
+
 
 ## Error handling
 
@@ -126,7 +146,7 @@ for future reference.
   history when there is a cache miss.
 - All queries to the Congress.gov API should be cached  in postgres
   with an appropriate expiration time to reduce the number of API calls and improve
-  performance.
+  performance. The expiration time should be in a constants.ts file.
 
 ## Models
 
