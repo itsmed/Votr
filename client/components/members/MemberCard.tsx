@@ -20,7 +20,7 @@ interface MemberCardProps {
  * Shows district only for Representatives; omits it for Senators.
  */
 export default function MemberCard({ member }: MemberCardProps) {
-  const { name, state, district, role, party } = member;
+  const { name, district, role, party } = member;
 
   return (
     <article className="flex items-start justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
@@ -35,10 +35,9 @@ export default function MemberCard({ member }: MemberCardProps) {
       </div>
       <div className="min-w-0">
         <p className="truncate font-medium text-gray-900">{name}</p>
-        <p className="mt-0.5 text-sm text-gray-500">
-          {state}
-          {district != null ? ` · District ${district}` : ''}
-        </p>
+        {district != null && (
+          <p className="mt-0.5 text-sm text-gray-500">District {district}</p>
+        )}
       </div>
       <div className="ml-3 flex shrink-0 flex-col items-end gap-1">
         <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${partyStyle(party)}`}>
