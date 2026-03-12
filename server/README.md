@@ -72,11 +72,12 @@ Congressional members (Senators and Representatives) cached from the Congress.go
 |---|---|---|
 | `id` | `SERIAL` | Primary key |
 | `name` | `VARCHAR(255)` | Not null |
-| `state` | `VARCHAR(2)` | Not null — two-letter state code |
+| `state` | `VARCHAR(255)` | Not null — full state name (e.g. `"Indiana"`) |
 | `district` | `VARCHAR(10)` | Nullable — House members only, null for Senators |
 | `role` | `VARCHAR(50)` | Not null — `'Senator'` or `'Representative'` |
 | `party` | `VARCHAR(100)` | Not null |
 | `api_id` | `VARCHAR(255)` | Not null, unique — Congress.gov bioguide ID |
+| `photo_url` | `TEXT` | Nullable — Congress.gov member photo URL |
 
 ---
 
@@ -145,7 +146,7 @@ members (independent — populated from Congress.gov API cache)
 
 ### `GET /api/member`
 
-Returns all congressional members. Checks the `members` database table first; on a cache miss, fetches from the Congress.gov `/member` endpoint, pages through all results, upserts them into the database, and returns the full list.
+Returns all congressional members for the current Congress (`CURRENT_CONGRESS = 119`). Checks the `members` database table first; on a cache miss, fetches from the Congress.gov `/member/congress/119` endpoint, pages through all results, replaces the `members` table, and returns the full list.
 
 **Response `200 OK`:**
 
@@ -156,12 +157,13 @@ Returns all congressional members. Checks the `members` database table first; on
   "members": [
     {
       "id": 1,
-      "name": "Adams, Jane",
-      "state": "NC",
-      "district": "12",
-      "role": "Representative",
-      "party": "Democrat",
-      "api_id": "A000370"
+      "name": "Young, Todd",
+      "state": "Indiana",
+      "district": null,
+      "role": "Senator",
+      "party": "Republican",
+      "api_id": "Y000064",
+      "photo_url": "https://www.congress.gov/img/member/y000064_200.jpg"
     }
   ]
 }
@@ -181,7 +183,7 @@ Returns all congressional members. Checks the `members` database table first; on
 
 **Caching behaviour:**
 - If any rows exist in the `members` table, the database result is returned immediately without calling the API.
-- If the table is empty, the Congress.gov API is called, all pages are fetched, and results are upserted (keyed on `api_id`) before returning.
+- If the table is empty, the Congress.gov API is called, all pages are fetched, the `members` table is cleared, and fresh data is inserted in a single transaction.
 
 ---
 
@@ -191,6 +193,8 @@ Returns all congressional members. Checks the `members` database table first; on
 server/
 ├── app.js                      # Express app setup and route mounting
 ├── bin/www                     # HTTP server entry point (port 4000)
+├── CONSTANTS.ts                # Shared constants (e.g. CURRENT_CONGRESS)
+├── tsconfig.json               # TypeScript config for .ts files in the server
 ├── db/
 │   └── index.js                # pg connection pool
 ├── routes/
@@ -202,13 +206,19 @@ server/
     └── memberService.test.js   # Unit tests for memberService
 ```
 
+### `CONSTANTS.ts`
+
+| Constant | Value | Description |
+|---|---|---|
+| `CURRENT_CONGRESS` | `119` | Active Congress session number — update every 2 years |
+
 ### Service: `memberService.js`
 
 | Export | Description |
 |---|---|
 | `getMembers()` | Top-level function: returns from cache or fetches from API |
 | `getCachedMembers()` | Queries the `members` table directly |
-| `fetchAndCacheMembers()` | Fetches all pages from Congress.gov API and upserts to DB |
+| `fetchAndCacheMembers()` | Fetches all pages from `/member/congress/119`, replaces DB table |
 | `mapApiMember(apiMember)` | Maps a Congress.gov API member object to the DB schema |
 
 ---
@@ -225,7 +235,7 @@ pnpm test
 
 | Area | Cases |
 |---|---|
-| `mapApiMember` | House member, Senator (null district), missing party |
-| `getCachedMembers` | Returns rows, empty result, DB error propagation |
-| `fetchAndCacheMembers` | Missing API key, single page, pagination, DB rollback on error, non-OK API response, empty API result |
+| `mapApiMember` | House member, Senator (last-term chamber, null district), chamber switch, missing party, missing depiction |
+| `getCachedMembers` | Returns rows (including photo_url), empty result, DB error propagation |
+| `fetchAndCacheMembers` | Missing API key, fetches `/congress/119`, DELETE+INSERT replace, pagination, DB rollback on error, non-OK API response, empty API result |
 | `getMembers` | Cache hit (no API call), cache miss (calls API) |

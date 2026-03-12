@@ -25,9 +25,13 @@ const makeMockClient = (overrides = {}) => ({
 const makeApiMember = (overrides = {}) => ({
   bioguideId: 'A000001',
   name: 'Adams, Jane',
-  state: 'CA',
+  state: 'California',
   district: 12,
   partyName: 'Democrat',
+  depiction: {
+    imageUrl: 'https://www.congress.gov/img/member/a000001_200.jpg',
+    attribution: 'Image courtesy of the Member',
+  },
   terms: { item: [{ chamber: 'House of Representatives', startYear: 2020 }] },
   ...overrides,
 });
@@ -35,11 +39,12 @@ const makeApiMember = (overrides = {}) => ({
 const makeDbMember = (overrides = {}) => ({
   id: 1,
   name: 'Adams, Jane',
-  state: 'CA',
+  state: 'California',
   district: '12',
   role: 'Representative',
   party: 'Democrat',
   api_id: 'A000001',
+  photo_url: 'https://www.congress.gov/img/member/a000001_200.jpg',
   ...overrides,
 });
 
@@ -50,24 +55,47 @@ describe('mapApiMember', () => {
     const result = mapApiMember(makeApiMember());
     expect(result).toEqual({
       name: 'Adams, Jane',
-      state: 'CA',
+      state: 'California',
       district: '12',
       role: 'Representative',
       party: 'Democrat',
       api_id: 'A000001',
+      photo_url: 'https://www.congress.gov/img/member/a000001_200.jpg',
     });
   });
 
-  test('maps a Senator correctly (no district)', () => {
-    const senator = makeApiMember({ district: undefined, partyName: 'Republican' });
+  test('maps a Senator correctly — role from last term chamber, no district', () => {
+    const senator = makeApiMember({
+      district: undefined,
+      partyName: 'Republican',
+      terms: { item: [{ chamber: 'Senate', startYear: 2017 }] },
+    });
     const result = mapApiMember(senator);
     expect(result.role).toBe('Senator');
     expect(result.district).toBeNull();
   });
 
+  test('uses last term chamber for role when member switched chambers', () => {
+    const switched = makeApiMember({
+      district: undefined,
+      terms: {
+        item: [
+          { chamber: 'House of Representatives', startYear: 2011, endYear: 2017 },
+          { chamber: 'Senate', startYear: 2017 },
+        ],
+      },
+    });
+    expect(mapApiMember(switched).role).toBe('Senator');
+  });
+
   test('defaults party to "Unknown" when partyName is missing', () => {
     const member = makeApiMember({ partyName: undefined });
     expect(mapApiMember(member).party).toBe('Unknown');
+  });
+
+  test('sets photo_url to null when depiction is missing', () => {
+    const member = makeApiMember({ depiction: undefined });
+    expect(mapApiMember(member).photo_url).toBeNull();
   });
 });
 
@@ -84,6 +112,12 @@ describe('getCachedMembers', () => {
 
     expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('SELECT'));
     expect(result).toEqual(rows);
+  });
+
+  test('includes photo_url in SELECT', async () => {
+    pool.query.mockResolvedValueOnce({ rows: [] });
+    await getCachedMembers();
+    expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('photo_url'));
   });
 
   test('returns empty array when no members in database', async () => {
@@ -119,21 +153,19 @@ describe('fetchAndCacheMembers', () => {
     await expect(fetchAndCacheMembers()).rejects.toThrow('CONGRESS_API_KEY');
   });
 
-  test('fetches from API, upserts to DB, and returns members', async () => {
+  test('fetches from /member/congress/119, replaces DB, and returns members', async () => {
     const apiMember = makeApiMember();
     const dbMember = makeDbMember();
 
     global.fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        members: [apiMember],
-        pagination: { count: 1 },
-      }),
+      json: async () => ({ members: [apiMember], pagination: { count: 1 } }),
     });
 
     const client = makeMockClient({
       query: jest.fn()
         .mockResolvedValueOnce({ rows: [] })          // BEGIN
+        .mockResolvedValueOnce({ rows: [] })          // DELETE FROM members
         .mockResolvedValueOnce({ rows: [dbMember] })  // INSERT ... RETURNING
         .mockResolvedValueOnce({ rows: [] }),          // COMMIT
     });
@@ -142,8 +174,11 @@ describe('fetchAndCacheMembers', () => {
     const result = await fetchAndCacheMembers();
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('api.congress.gov'));
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/member/congress/119')
+    );
     expect(client.query).toHaveBeenCalledWith('BEGIN');
+    expect(client.query).toHaveBeenCalledWith('DELETE FROM members');
     expect(client.query).toHaveBeenCalledWith('COMMIT');
     expect(client.release).toHaveBeenCalled();
     expect(result).toEqual([dbMember]);
@@ -169,6 +204,7 @@ describe('fetchAndCacheMembers', () => {
     const client = makeMockClient({
       query: jest.fn()
         .mockResolvedValueOnce({ rows: [] })        // BEGIN
+        .mockResolvedValueOnce({ rows: [] })        // DELETE FROM members
         .mockResolvedValueOnce({ rows: [db1] })     // INSERT member1
         .mockResolvedValueOnce({ rows: [db2] })     // INSERT member2
         .mockResolvedValueOnce({ rows: [] }),        // COMMIT
@@ -181,7 +217,7 @@ describe('fetchAndCacheMembers', () => {
     expect(result).toHaveLength(2);
   });
 
-  test('rolls back transaction on DB insert error', async () => {
+  test('rolls back transaction on DB error and releases client', async () => {
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ members: [makeApiMember()], pagination: { count: 1 } }),
@@ -189,11 +225,11 @@ describe('fetchAndCacheMembers', () => {
 
     const client = makeMockClient({
       query: jest.fn()
-        .mockResolvedValueOnce({ rows: [] })          // BEGIN
+        .mockResolvedValueOnce({ rows: [] })              // BEGIN
+        .mockResolvedValueOnce({ rows: [] })              // DELETE FROM members
         .mockRejectedValueOnce(new Error('insert failed')), // INSERT
     });
-    // Add ROLLBACK mock
-    client.query.mockResolvedValueOnce({ rows: [] }); // ROLLBACK
+    client.query.mockResolvedValueOnce({ rows: [] });     // ROLLBACK
     pool.connect.mockResolvedValueOnce(client);
 
     await expect(fetchAndCacheMembers()).rejects.toThrow('insert failed');
@@ -252,6 +288,7 @@ describe('getMembers', () => {
 
     const client = makeMockClient({
       query: jest.fn()
+        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [dbMember] })
         .mockResolvedValueOnce({ rows: [] }),

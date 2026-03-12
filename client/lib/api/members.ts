@@ -8,6 +8,7 @@ export interface Member {
   role: 'Senator' | 'Representative';
   party: string;
   api_id: string;
+  photo_url: string | null;
 }
 
 export interface MembersResponse {

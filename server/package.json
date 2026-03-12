@@ -4,14 +4,15 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "NODE_ENV=development ./node_modules/.bin/nodemon --exec 'node --env-file=.env.development.local' ./bin/www",
+    "dev": "NODE_ENV=development ./node_modules/.bin/nodemon --exec 'tsx --env-file=.env.development.local' ./bin/www",
     "test": "jest"
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": [
-      "**/tests/**/*.test.js"
-    ]
+    "testMatch": ["**/tests/**/*.test.js"],
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    }
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
@@ -24,6 +25,9 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "jest": "^30.3.0",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "ts-jest": "^29.4.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }

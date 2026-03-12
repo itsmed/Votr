@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS members (
   district  VARCHAR(10),                   -- NULL for Senators
   role      VARCHAR(50)  NOT NULL,         -- 'Senator' | 'Representative'
   party     VARCHAR(100) NOT NULL,
-  api_id    VARCHAR(255) NOT NULL UNIQUE   -- Congress.gov bioguide ID
+  api_id    VARCHAR(255) NOT NULL UNIQUE,  -- Congress.gov bioguide ID
+  photo_url TEXT                           -- Congress.gov member photo
 );
 
 CREATE TABLE IF NOT EXISTS bills (
@@ -49,6 +50,6 @@ CREATE TABLE IF NOT EXISTS comments (
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Mark the initial schema migration as applied so the migrate script skips it
-INSERT INTO schema_migrations (version) VALUES ('001_initial_schema')
+-- Mark applied migrations so the migrate script skips them on fresh containers
+INSERT INTO schema_migrations (version) VALUES ('001_initial_schema'), ('002_add_members_photo_url')
   ON CONFLICT (version) DO NOTHING;

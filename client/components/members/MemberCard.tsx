@@ -1,4 +1,5 @@
 import { type Member } from '@/lib/api/members';
+import Image from 'next/image';
 
 const PARTY_STYLES: Record<string, string> = {
   Democrat: 'bg-blue-100 text-blue-800',
@@ -23,6 +24,15 @@ export default function MemberCard({ member }: MemberCardProps) {
 
   return (
     <article className="flex items-start justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
+      <div className="min-w-0">
+        <Image
+          className="h-12 w-12 rounded-full object-cover"
+          src={member.photo_url ?? '/placeholder-profile.jpg'}
+          alt={`${name}'s profile picture`}
+          width={48}
+          height={48}
+        />
+      </div>
       <div className="min-w-0">
         <p className="truncate font-medium text-gray-900">{name}</p>
         <p className="mt-0.5 text-sm text-gray-500">
