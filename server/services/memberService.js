@@ -121,4 +121,28 @@ async function getMembers() {
   return { members, source: 'api' };
 }
 
-module.exports = { getMembers, getCachedMembers, fetchAndCacheMembers, mapApiMember };
+/**
+ * Fetches detailed information for a single member from the Congress.gov API.
+ * Not cached — returns fresh data on every call.
+ *
+ * @param {string} bioguideId - Congress.gov bioguide ID, e.g. "Y000064"
+ * @returns {Promise<Object|null>} Raw member object from Congress.gov
+ */
+async function getMemberDetail(bioguideId) {
+  const apiKey = process.env.CONGRESS_API_KEY;
+  if (!apiKey) {
+    throw new Error('CONGRESS_API_KEY environment variable is not set');
+  }
+
+  const url = `${CONGRESS_API_BASE}/member/${bioguideId}?api_key=${apiKey}&format=json`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Congress.gov API error: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.member ?? null;
+}
+
+module.exports = { getMembers, getCachedMembers, fetchAndCacheMembers, mapApiMember, getMemberDetail };

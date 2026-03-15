@@ -13,6 +13,7 @@ const {
   fetchAndCacheMembers,
   getMembers,
   mapApiMember,
+  getMemberDetail,
 } = require('../services/memberService');
 
 // Helpers
@@ -299,5 +300,66 @@ describe('getMembers', () => {
 
     expect(result.source).toBe('api');
     expect(result.members).toEqual([dbMember]);
+  });
+});
+
+// ─── getMemberDetail ──────────────────────────────────────────────────────────
+
+describe('getMemberDetail', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env = { ...originalEnv, CONGRESS_API_KEY: 'test-key' };
+    global.fetch = jest.fn();
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    delete global.fetch;
+  });
+
+  test('throws when CONGRESS_API_KEY is missing', async () => {
+    delete process.env.CONGRESS_API_KEY;
+    await expect(getMemberDetail('Y000064')).rejects.toThrow('CONGRESS_API_KEY');
+  });
+
+  test('calls the correct Congress.gov URL with the bioguide ID', async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ member: makeApiMember() }),
+    });
+
+    await getMemberDetail('A000001');
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/member/A000001')
+    );
+  });
+
+  test('returns the member object from the API response', async () => {
+    const apiMember = makeApiMember();
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ member: apiMember }),
+    });
+
+    const result = await getMemberDetail('A000001');
+    expect(result).toEqual(apiMember);
+  });
+
+  test('returns null when API response has no member field', async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({}),
+    });
+
+    const result = await getMemberDetail('A000001');
+    expect(result).toBeNull();
+  });
+
+  test('throws on non-ok response', async () => {
+    global.fetch.mockResolvedValueOnce({ ok: false, status: 404, statusText: 'Not Found' });
+    await expect(getMemberDetail('INVALID')).rejects.toThrow('Congress.gov API error: 404 Not Found');
   });
 });

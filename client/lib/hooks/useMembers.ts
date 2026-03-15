@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchMembers, type Member } from '@/lib/api/members';
+import { fetchMembers, fetchMemberDetail, type Member, type MemberDetail } from '@/lib/api/members';
 
 export interface UseMembersResult {
   senators: Member[];
@@ -19,4 +19,19 @@ export function useMembers(): UseMembersResult {
   const representatives = data?.members.filter((m) => m.role === 'Representative') ?? [];
 
   return { senators, representatives, isLoading, isError, error: error as Error | null };
+}
+
+interface UseMemberDetailResult {
+  member: MemberDetail | null;
+  isLoading: boolean;
+  isError: boolean;
+}
+
+export function useMemberDetail(bioguideId: string): UseMemberDetailResult {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['member', bioguideId],
+    queryFn: () => fetchMemberDetail(bioguideId),
+  });
+
+  return { member: data?.member ?? null, isLoading, isError };
 }

@@ -17,6 +17,49 @@ export interface MembersResponse {
   members: Member[];
 }
 
+export interface MemberTerm {
+  chamber: string;
+  congress: number;
+  startYear: number;
+  endYear: number | null;
+  memberType: string;
+  stateName: string;
+}
+
+export interface MemberPartyHistory {
+  partyName: string;
+  partyAbbreviation: string;
+  startYear: number;
+}
+
+export interface MemberDetail {
+  bioguideId: string;
+  name: string;
+  state: string;
+  district: number | null;
+  currentMember: boolean;
+  birthYear: string | null;
+  honorificName: string | null;
+  officialWebsiteUrl: string | null;
+  depiction: { imageUrl: string; attribution: string | null } | null;
+  partyHistory: MemberPartyHistory[];
+  terms: MemberTerm[];
+  sponsoredLegislation: { count: number; url: string };
+  cosponsoredLegislation: { count: number; url: string };
+}
+
+export interface MemberDetailResponse {
+  member: MemberDetail;
+}
+
+export async function fetchMemberDetail(bioguideId: string): Promise<MemberDetailResponse> {
+  const res = await fetch(`${API_URL}/api/member/${bioguideId}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch member detail: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
 export async function fetchMembers(): Promise<MembersResponse> {
   const res = await fetch(`${API_URL}/api/member`);
   if (!res.ok) {

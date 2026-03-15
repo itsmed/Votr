@@ -1,7 +1,7 @@
 'use strict';
 
 const express = require('express');
-const { getMembers } = require('../../services/memberService');
+const { getMembers, getMemberDetail } = require('../../services/memberService');
 
 const router = express.Router();
 
@@ -24,6 +24,28 @@ router.get('/', async (req, res) => {
   } catch (err) {
     console.error('GET /api/member error:', err);
     res.status(500).json({ error: 'Failed to retrieve members' });
+  }
+});
+
+/**
+ * GET /api/member/:bioguideId
+ *
+ * Returns detailed information for a single member from the Congress.gov API.
+ *
+ * Response 200: raw member object from Congress.gov
+ * Response 404: { error: string }
+ * Response 500: { error: string }
+ */
+router.get('/:bioguideId', async (req, res) => {
+  try {
+    const member = await getMemberDetail(req.params.bioguideId);
+    if (!member) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    res.json({ member });
+  } catch (err) {
+    console.error('GET /api/member/:bioguideId error:', err);
+    res.status(500).json({ error: 'Failed to retrieve member detail' });
   }
 });
 

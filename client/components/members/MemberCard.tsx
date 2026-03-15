@@ -1,5 +1,6 @@
-import { type Member } from '@/lib/api/members';
+import Link from 'next/link';
 import Image from 'next/image';
+import { type Member } from '@/lib/api/members';
 
 const PARTY_STYLES: Record<string, string> = {
   Democrat: 'bg-blue-100 text-blue-800',
@@ -23,7 +24,8 @@ export default function MemberCard({ member }: MemberCardProps) {
   const { name, district, role, party } = member;
 
   return (
-    <article className="flex items-start justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
+    <Link href={`/members/${member.api_id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg">
+    <article className="flex items-start justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm transition-shadow hover:shadow-md">
       <div className="min-w-0">
         <Image
           className="h-12 w-12 rounded-full object-cover"
@@ -46,5 +48,6 @@ export default function MemberCard({ member }: MemberCardProps) {
         <span className="text-xs text-gray-400">{role}</span>
       </div>
     </article>
+    </Link>
   );
 }
