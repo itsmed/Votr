@@ -19,7 +19,6 @@ export default function MemberDetail({ member }: MemberDetailProps) {
   const currentParty = member.partyHistory.at(-1)?.partyName ?? 'Unknown';
   const latestTerm = member.terms.at(-1);
   const role = latestTerm?.memberType ?? 'Member';
-
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -33,7 +32,7 @@ export default function MemberDetail({ member }: MemberDetailProps) {
         />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold text-gray-900">
-            {member.honorificName ? `${member.honorificName} ` : ''}{member.name}
+            {member.honorificName ? `${member.honorificName} ` : ''}{member.directOrderName}
           </h1>
           <p className="mt-0.5 text-sm text-gray-500">{member.state}</p>
           <div className="mt-2 flex flex-wrap gap-2">

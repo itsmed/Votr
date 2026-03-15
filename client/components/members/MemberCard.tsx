@@ -22,7 +22,7 @@ interface MemberCardProps {
  */
 export default function MemberCard({ member }: MemberCardProps) {
   const { name, district, role, party } = member;
-
+  
   return (
     <Link href={`/members/${member.api_id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg">
     <article className="flex items-start justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm transition-shadow hover:shadow-md">
@@ -36,7 +36,7 @@ export default function MemberCard({ member }: MemberCardProps) {
         />
       </div>
       <div className="min-w-0">
-        <p className="truncate font-medium text-gray-900">{name}</p>
+        <p className="truncate font-medium text-gray-900">{name.split(',').reverse().join(' ')}</p>
         {district != null && (
           <p className="mt-0.5 text-sm text-gray-500">District {district}</p>
         )}
