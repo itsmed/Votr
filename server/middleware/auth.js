@@ -35,7 +35,7 @@ async function authMiddleware(req, res, next) {
 
     if (userId) {
       const { rows } = await pool.query(
-        'SELECT id, name, email, address, preferences FROM users WHERE id = $1',
+        'SELECT id, name, email, address, preferences, senator_ids, congress_member_ids FROM users WHERE id = $1',
         [userId]
       );
       if (rows.length > 0) {

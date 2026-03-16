@@ -4,10 +4,15 @@ import { createContext, useContext } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchCurrentUser, updateCurrentUser, User } from '@/lib/api/user';
 
+type UpdateUserFields = Partial<Pick<User, 'address' | 'preferences'>> & {
+  senator_api_ids?: string[];
+  congress_member_api_ids?: string[];
+};
+
 interface UserContextValue {
   user: User | null;
   isLoading: boolean;
-  updateUser: (fields: Partial<Pick<User, 'address' | 'preferences'>>) => Promise<void>;
+  updateUser: (fields: UpdateUserFields) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextValue>({
@@ -26,9 +31,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     staleTime: Infinity,
   });
 
-  async function updateUser(fields: Partial<Pick<User, 'address' | 'preferences'>>) {
+  async function updateUser(fields: UpdateUserFields) {
     const updated = await updateCurrentUser(fields);
     queryClient.setQueryData(['currentUser'], updated);
+    // Invalidate cached reps so NavBar re-fetches with new IDs
+    queryClient.invalidateQueries({ queryKey: ['myReps'] });
   }
 
   return (

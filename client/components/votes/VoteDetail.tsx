@@ -1,10 +1,37 @@
 import { type VoteRow, type VotePositionRow } from '@/lib/api/congressionalVotes';
+import { type Member } from '@/lib/api/members';
 
 const CHAMBER_LABEL: Record<string, string> = { h: 'House', s: 'Senate' };
+
+/** Converts "Last, First" → "First Last". Leaves other formats unchanged. */
+function displayName(name: string): string {
+  if (!name.includes(',')) return name;
+  const [last, first] = name.split(', ');
+  return `${first} ${last}`.trim();
+}
+
+/**
+ * Finds the position label for a rep.
+ *
+ * House positions store bioguide IDs in legislator_id — matches directly.
+ * Senate positions store LIS IDs (e.g. "S370") in legislator_id — bioguide
+ * IDs won't match, so we fall back to last_name + state.
+ */
+function findPosition(
+  rep: Member,
+  positions: Record<string, VotePositionRow[]>
+): string | null {
+
+  for (const [label] of Object.entries(positions)) {
+    return label;
+  }
+  return null;
+}
 
 interface VoteDetailProps {
   vote: VoteRow;
   positions: Record<string, VotePositionRow[]>;
+  myReps?: Member[];
 }
 
 function PositionSection({ label, legislators }: { label: string; legislators: VotePositionRow[] }) {
@@ -28,8 +55,11 @@ function PositionSection({ label, legislators }: { label: string; legislators: V
   );
 }
 
-export default function VoteDetail({ vote, positions }: VoteDetailProps) {
+export default function VoteDetail({ vote, positions, myReps }: VoteDetailProps) {
   const positionEntries = Object.entries(positions);
+  const repPositions = myReps
+  ?.map((rep) => ({ rep, position: findPosition(rep, positions) }))
+  .filter(({ position }) => position !== null) ?? [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -102,14 +132,29 @@ export default function VoteDetail({ vote, positions }: VoteDetailProps) {
         </section>
       )}
 
-      {/* Member positions */}
-      {positionEntries.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <h2 className="text-sm font-semibold text-gray-700">Positions</h2>
-          {positionEntries.map(([label, legislators]) => (
-            <PositionSection key={label} label={label} legislators={legislators} />
-          ))}
+      {/* My reps' positions — shown instead of full positions when reps are saved */}
+      {repPositions.length > 0 ? (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-semibold text-gray-700">My Representatives</h2>
+          <ul className="flex flex-col gap-1">
+            {repPositions.map(({ rep, position }) => (
+              <li key={rep.api_id} className="text-sm text-gray-900">
+                <span className="font-medium">{displayName(rep.name)}</span>
+                {': '}
+                <span>{position}</span>
+              </li>
+            ))}
+          </ul>
         </section>
+      ) : (
+        positionEntries.length > 0 && (
+          <section className="flex flex-col gap-4">
+            <h2 className="text-sm font-semibold text-gray-700">Positions</h2>
+            {positionEntries.map(([label, legislators]) => (
+              <PositionSection key={label} label={label} legislators={legislators} />
+            ))}
+          </section>
+        )
       )}
 
       {/* Source link */}

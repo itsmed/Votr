@@ -1,3 +1,5 @@
+import type { Member } from '@/lib/api/members';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export interface User {
@@ -6,6 +8,13 @@ export interface User {
   email: string;
   address: string | null;
   preferences: Record<string, unknown>;
+  senator_ids: number[];
+  congress_member_ids: number[];
+}
+
+export interface MyRepsResponse {
+  senators: Member[];
+  representatives: Member[];
 }
 
 export async function fetchCurrentUser(): Promise<User> {
@@ -16,7 +25,10 @@ export async function fetchCurrentUser(): Promise<User> {
 }
 
 export async function updateCurrentUser(
-  fields: Partial<Pick<User, 'address' | 'preferences'>>
+  fields: Partial<Pick<User, 'address' | 'preferences'>> & {
+    senator_api_ids?: string[];
+    congress_member_api_ids?: string[];
+  }
 ): Promise<User> {
   const res = await fetch(`${API_URL}/api/auth/me`, {
     method: 'PATCH',
@@ -27,4 +39,10 @@ export async function updateCurrentUser(
   if (!res.ok) throw new Error('Failed to update user');
   const data = await res.json();
   return data.user;
+}
+
+export async function fetchMyReps(): Promise<MyRepsResponse> {
+  const res = await fetch(`${API_URL}/api/auth/me/reps`, { credentials: 'include' });
+  if (!res.ok) throw new Error('Failed to fetch reps');
+  return res.json();
 }

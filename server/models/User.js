@@ -6,7 +6,9 @@ const createSQL = `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     id    SERIAL PRIMARY KEY,
     name  VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE
+    email VARCHAR(255) NOT NULL UNIQUE,
+    senator_ids INTEGER[] NOT NULL DEFAULT '{}',
+    congress_member_ids INTEGER[] NOT NULL DEFAULT '{}'
   );
 `;
 

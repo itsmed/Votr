@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { findRepresentatives, type FindRepsResponse, type Legislator } from '@/lib/api/representatives';
+import { useUser } from '@/lib/context/UserContext';
 import MemberCard from '@/components/members/MemberCard';
 
 /**
@@ -57,6 +58,9 @@ function ResultsPanel({ result }: ResultsPanelProps) {
  * /find-my-reps — address lookup for congressional representatives and senators.
  * Calls the backend /find-representative-and-senator endpoint which geocodes the
  * address via Geocodio and returns the current legislators for that district.
+ *
+ * When the user is logged in, saves the returned legislator IDs to their profile
+ * so the NavBar can display their reps by name.
  */
 export default function FindMyRepsPage() {
   const [address, setAddress] = useState('');
@@ -64,7 +68,9 @@ export default function FindMyRepsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const { user, updateUser } = useUser();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!address.trim()) return;
 
@@ -75,6 +81,16 @@ export default function FindMyRepsPage() {
     try {
       const data = await findRepresentatives(address.trim());
       setResult(data);
+
+      if (user) {
+        const senator_api_ids = data.legislators
+          .filter((l) => l.role === 'Senator')
+          .map((l) => l.api_id);
+        const congress_member_api_ids = data.legislators
+          .filter((l) => l.role === 'Representative')
+          .map((l) => l.api_id);
+        await updateUser({ senator_api_ids, congress_member_api_ids });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {

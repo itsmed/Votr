@@ -4,6 +4,8 @@ import { use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useVoteDetail } from '@/lib/hooks/useVotes';
+import { useUser } from '@/lib/context/UserContext';
+import { useMyReps } from '@/lib/hooks/useMyReps';
 import VoteDetail from '@/components/votes/VoteDetail';
 
 interface PageParams {
@@ -36,6 +38,16 @@ export default function VoteDetailPage({ params }: { params: Promise<PageParams>
   const decodedId = decodeURIComponent(voteId);
 
   const { data, isLoading, isError } = useVoteDetail(decodedId);
+  const { user } = useUser();
+
+  const hasReps =
+    (user?.senator_ids?.length ?? 0) > 0 ||
+    (user?.congress_member_ids?.length ?? 0) > 0;
+  const { data: repsData } = useMyReps(hasReps);
+  const chamber = data?.vote.chamber;
+  const myReps = repsData && chamber
+    ? chamber === 's' ? repsData.senators : repsData.representatives
+    : undefined;
 
   const prevId = data?.prev_vote_id;
   const nextId = data?.next_vote_id;
@@ -79,7 +91,7 @@ export default function VoteDetailPage({ params }: { params: Promise<PageParams>
           <p className="text-sm text-red-500">Failed to load vote. Please try again.</p>
         )}
         {!isLoading && !isError && data && (
-          <VoteDetail vote={data.vote} positions={data.positions} />
+          <VoteDetail vote={data.vote} positions={data.positions} myReps={myReps} />
         )}
       </main>
     </div>

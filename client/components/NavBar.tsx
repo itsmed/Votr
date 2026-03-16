@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@/lib/context/UserContext';
+import { useMyReps } from '@/lib/hooks/useMyReps';
 import { useQueryClient } from '@tanstack/react-query';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -11,7 +12,6 @@ const NAV_LINKS = [
   { href: '/bills', label: 'Bills' },
   { href: '/members', label: 'Members' },
   { href: '/votes', label: 'Votes' },
-  { href: '/find-my-reps', label: 'Find My Reps' },
 ];
 
 function GearIcon() {
@@ -40,11 +40,21 @@ export default function NavBar() {
   const queryClient = useQueryClient();
   const { user, isLoading } = useUser();
 
+  const hasReps =
+    !isLoading &&
+    !!user &&
+    ((user.senator_ids?.length ?? 0) > 0 || (user.congress_member_ids?.length ?? 0) > 0);
+
+  const { data: reps } = useMyReps(hasReps);
+
   async function handleLogout() {
     await fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
     queryClient.setQueryData(['currentUser'], null);
+    queryClient.removeQueries({ queryKey: ['myReps'] });
     router.push('/');
   }
+
+  const allReps = reps ? [...reps.senators, ...reps.representatives] : [];
 
   return (
     <nav className="shrink-0 border-b border-gray-200 bg-white">
@@ -70,6 +80,39 @@ export default function NavBar() {
               </Link>
             );
           })}
+
+          {/* My reps: show names when saved, otherwise show Find My Reps link */}
+          {!isLoading && allReps.length > 0 ? (
+            allReps.map((rep) => {
+              const href = `/members/${rep.api_id}`;
+              const isActive = pathname === href;
+              return (
+                <>
+                  <Link
+                    key={rep.api_id}
+                    href={href}
+                    className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                >
+                  {rep.role + ' ' + (rep.name.includes(',') ? rep.name.split(', ').reverse().join(' ') : rep.name)}
+                </Link>
+              </>);
+            })
+          ) : (
+            <Link
+              href="/find-my-reps"
+              className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                pathname === '/find-my-reps' || pathname.startsWith('/find-my-reps/')
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              Find My Reps
+            </Link>
+          )}
         </div>
 
         <div className="ml-auto flex items-center gap-2">
