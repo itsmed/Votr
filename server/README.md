@@ -35,19 +35,36 @@ Create `server/.env.development` for local development (already exists, not comm
 postgresql://pollus:pollus_dev@localhost:5432/pollus_dev
 ```
 
-The database runs in Docker (see repo root `docker-compose.yml`). The schema init script lives at `docker/postgres/init/01_init.sql` and runs automatically on first container creation.
+The database runs in Docker (see repo root `docker-compose.yml`).
 
-To re-run migrations manually against a running container:
-
-```bash
-docker exec -i pollus-db-1 psql -U pollus -d pollus_dev < docker/postgres/init/01_init.sql
-```
-
-To reset the database entirely (wipes all data):
+### First-time setup
 
 ```bash
-pnpm db:reset   # from repo root
+# 1. Start the Postgres container
+pnpm db:up          # from repo root
+
+# 2. Apply all SQL migrations and seed congressional vote data (~1 100 votes)
+pnpm db:migrate     # from repo root
 ```
+
+`db:migrate` is idempotent — re-running it skips already-applied migrations and skips already-seeded vote rows.
+
+### Subsequent workflow
+
+| Situation | Command (from repo root) |
+|---|---|
+| Apply new SQL migrations + re-sync vote data | `pnpm db:migrate` |
+| Preview pending migrations without applying | `pnpm db:migrate --dry-run` |
+| Seed / re-sync vote data only | `pnpm --filter server db:seed-votes` |
+| Wipe everything and start fresh | `pnpm db:reset && pnpm db:migrate` |
+
+### How migrations work
+
+SQL migrations live in `docker/postgres/migrations/` and are named `NNN_description.sql`. The `db:migrate` script (at `scripts/migrate.sh`) applies each file in order inside a transaction and records the version in `schema_migrations` — files already listed there are skipped.
+
+### How vote seeding works
+
+After SQL migrations, `db:migrate` runs `server/db/seedVotes.js` which walks every `data/119/votes/**/*.json` file and inserts rows into `congressional_votes` and `vote_positions` using `ON CONFLICT DO NOTHING`. Each file is processed in its own transaction; a bad file is skipped and reported without aborting the rest.
 
 ---
 
