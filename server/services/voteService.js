@@ -9,21 +9,25 @@ const pool = require('../db');
  * @returns {Promise<{ votes: object[], total: number }>}
  */
 async function getVotes({ limit = 50, offset = 0, chamber } = {}) {
-  const params = [limit, offset];
-  const whereClause = chamber ? `WHERE chamber = $3` : '';
-  if (chamber) params.push(chamber);
+  // The rows query has limit=$1, offset=$2, chamber=$3 (if present).
+  // The count query is independent and uses chamber=$1 (if present).
+  const rowsParams = chamber ? [limit, offset, chamber] : [limit, offset];
+  const rowsWhere  = chamber ? 'WHERE chamber = $3' : '';
+
+  const countParams = chamber ? [chamber] : [];
+  const countWhere  = chamber ? 'WHERE chamber = $1' : '';
 
   const [rowsResult, countResult] = await Promise.all([
     pool.query(
       `SELECT * FROM congressional_votes
-       ${whereClause}
+       ${rowsWhere}
        ORDER BY date DESC
        LIMIT $1 OFFSET $2`,
-      params
+      rowsParams
     ),
     pool.query(
-      `SELECT COUNT(*)::integer AS total FROM congressional_votes ${whereClause}`,
-      chamber ? [chamber] : []
+      `SELECT COUNT(*)::integer AS total FROM congressional_votes ${countWhere}`,
+      countParams
     ),
   ]);
 
