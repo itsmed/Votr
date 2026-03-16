@@ -6,12 +6,14 @@
  * Run via: pnpm db:setup
  *
  * Tables are created in dependency order so FK references resolve correctly:
- *   1. schema_migrations (bookkeeping)
+ *   1. schema_migrations     (bookkeeping)
  *   2. users
  *   3. members
  *   4. bills
- *   5. votes    (→ users, bills)
- *   6. comments (→ users, bills)
+ *   5. votes                 (→ users, bills)
+ *   6. comments              (→ users, bills)
+ *   7. congressional_votes
+ *   8. vote_positions        (→ congressional_votes)
  */
 
 const pool = require('./index');
@@ -20,6 +22,8 @@ const Member = require('../models/Member');
 const Bill = require('../models/Bill');
 const Vote = require('../models/Vote');
 const Comment = require('../models/Comment');
+const CongressionalVote = require('../models/CongressionalVote');
+const VotePosition = require('../models/VotePosition');
 
 const SCHEMA_MIGRATIONS_SQL = `
   CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -29,7 +33,7 @@ const SCHEMA_MIGRATIONS_SQL = `
 `;
 
 // Ordered by FK dependency
-const MODELS = [User, Member, Bill, Vote, Comment];
+const MODELS = [User, Member, Bill, Vote, Comment, CongressionalVote, VotePosition];
 
 async function setup() {
   console.log('Setting up database tables…\n');
