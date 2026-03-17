@@ -2,7 +2,8 @@
 
 import { use } from 'react';
 import Link from 'next/link';
-import { useMemberDetail } from '@/lib/hooks/useMembers';
+import { useMemberDetail, useMemberAgreement } from '@/lib/hooks/useMembers';
+import { useUser } from '@/lib/context/UserContext';
 import MemberDetail from '@/components/members/MemberDetail';
 
 interface PageParams {
@@ -12,6 +13,8 @@ interface PageParams {
 export default function MemberDetailPage({ params }: { params: Promise<PageParams> }) {
   const { bioguideId } = use(params);
   const { member, isLoading, isError } = useMemberDetail(bioguideId);
+  const { user } = useUser();
+  const { agreement } = useMemberAgreement(bioguideId, user !== null);
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -24,7 +27,9 @@ export default function MemberDetailPage({ params }: { params: Promise<PageParam
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
         {isLoading && <p className="text-sm text-gray-400">Loading member…</p>}
         {isError && <p className="text-sm text-red-500">Failed to load member. Please try again.</p>}
-        {!isLoading && !isError && member && <MemberDetail member={member} />}
+        {!isLoading && !isError && member && (
+          <MemberDetail member={member} agreement={agreement} />
+        )}
       </main>
     </div>
   );

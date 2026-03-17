@@ -52,6 +52,22 @@ export interface MemberDetailResponse {
   member: MemberDetail;
 }
 
+export interface AgreementResponse {
+  agree: number;
+  total: number;
+  percentage: number | null;
+}
+
+export async function fetchMemberAgreement(bioguideId: string): Promise<AgreementResponse> {
+  const res = await fetch(`${API_URL}/api/member/${bioguideId}/agreement`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch agreement: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
 export async function fetchMemberDetail(bioguideId: string): Promise<MemberDetailResponse> {
   const res = await fetch(`${API_URL}/api/member/${bioguideId}`);
   if (!res.ok) {

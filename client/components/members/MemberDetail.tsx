@@ -1,8 +1,9 @@
 import Image from 'next/image';
-import { type MemberDetail } from '@/lib/api/members';
+import { type MemberDetail, type AgreementResponse } from '@/lib/api/members';
 
 interface MemberDetailProps {
   member: MemberDetail;
+  agreement?: AgreementResponse | null;
 }
 
 const PARTY_STYLES: Record<string, string> = {
@@ -15,10 +16,43 @@ function partyStyle(party: string): string {
   return PARTY_STYLES[party] ?? 'bg-gray-100 text-gray-700';
 }
 
-export default function MemberDetail({ member }: MemberDetailProps) {
+/**
+ * SVG donut pie chart showing agree/disagree split.
+ * Uses the r≈15.9 trick so circumference ≈ 100, making strokeDasharray
+ * values directly equal to percentages.
+ */
+function AgreementPie({ percentage }: { percentage: number }) {
+  return (
+    <svg viewBox="0 0 36 36" className="h-24 w-24 shrink-0" aria-hidden="true">
+      {/* Disagree background ring */}
+      <circle cx="18" cy="18" r="15.9" fill="none" stroke="#fee2e2" strokeWidth="3.8" />
+      {/* Agree arc — starts at the top (offset 25 = 25% of circumference = 90°) */}
+      <circle
+        cx="18" cy="18" r="15.9"
+        fill="none"
+        stroke="#22c55e"
+        strokeWidth="3.8"
+        strokeDasharray={`${percentage} ${100 - percentage}`}
+        strokeDashoffset="25"
+        strokeLinecap="round"
+      />
+      {/* Percentage label */}
+      <text x="18" y="20" textAnchor="middle" fontSize="8" fontWeight="600" fill="#111827">
+        {percentage}%
+      </text>
+    </svg>
+  );
+}
+
+export default function MemberDetail({ member, agreement }: MemberDetailProps) {
   const currentParty = member.partyHistory.at(-1)?.partyName ?? 'Unknown';
   const latestTerm = member.terms.at(-1);
   const role = latestTerm?.memberType ?? 'Member';
+
+  // directOrderName is "First Last" — grab the first word for informal use in the agreement label
+  const firstName = (member as unknown as Record<string, string>)['directOrderName']?.split(' ')[0]
+    ?? member.name;
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -32,7 +66,7 @@ export default function MemberDetail({ member }: MemberDetailProps) {
         />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold text-gray-900">
-            {member.honorificName ? `${member.honorificName} ` : ''}{member.directOrderName}
+            {member.honorificName ? `${member.honorificName} ` : ''}{(member as unknown as Record<string, string>)['directOrderName']}
           </h1>
           <p className="mt-0.5 text-sm text-gray-500">{member.state}</p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -50,6 +84,21 @@ export default function MemberDetail({ member }: MemberDetailProps) {
           </div>
         </div>
       </div>
+
+      {/* Agreement with user */}
+      {agreement && agreement.percentage !== null && (
+        <div className="flex items-center gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3">
+          <AgreementPie percentage={agreement.percentage} />
+          <div>
+            <p className="text-sm font-semibold text-gray-900">
+              You agree with {firstName} {agreement.percentage}% of the time
+            </p>
+            <p className="mt-0.5 text-xs text-gray-500">
+              Based on {agreement.total} shared vote{agreement.total !== 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 gap-3">

@@ -145,4 +145,88 @@ async function getMemberDetail(bioguideId) {
   return data.member ?? null;
 }
 
-module.exports = { getMembers, getCachedMembers, fetchAndCacheMembers, mapApiMember, getMemberDetail };
+/**
+ * Computes how often a user's votes on congressional roll-calls agree with a
+ * specific member's votes.
+ *
+ * House members are matched by bioguide ID (stored directly in vote_positions).
+ * Senate members are matched by last name + party initial (the vote JSON stores
+ * LIS IDs, not bioguide IDs, so direct ID matching fails for senators).
+ *
+ * Only votes where the user chose 'Yea' or 'Nay' are counted — Abstain is
+ * excluded because it doesn't represent a meaningful stance to compare.
+ *
+ * Agreement is defined as:
+ *   User Yea  ↔ Member Yea or Aye
+ *   User Nay  ↔ Member Nay or No
+ *
+ * @param {number} userId
+ * @param {string} bioguideId  — e.g. "Y000064"
+ * @returns {Promise<{ agree: number, total: number, percentage: number|null }>}
+ */
+async function getMemberAgreement(userId, bioguideId) {
+  // Look up the cached member row to determine role, name, and party.
+  const memberResult = await pool.query(
+    'SELECT role, name, party FROM members WHERE api_id = $1',
+    [bioguideId]
+  );
+
+  if (memberResult.rows.length === 0) {
+    return { agree: 0, total: 0, percentage: null };
+  }
+
+  const { role, name, party } = memberResult.rows[0];
+  const isSenator = role === 'Senator';
+
+  let rows;
+
+  if (!isSenator) {
+    // House: vote_positions.legislator_id = bioguide ID
+    ({ rows } = await pool.query(
+      `SELECT
+         COUNT(*) FILTER (WHERE
+           (ucv.position = 'Yea' AND vp.position IN ('Yea', 'Aye')) OR
+           (ucv.position = 'Nay' AND vp.position IN ('Nay', 'No'))
+         )::integer AS agree_count,
+         COUNT(*)::integer AS total_count
+       FROM user_congressional_votes ucv
+       JOIN congressional_votes cv ON cv.id = ucv.congressional_vote_id
+       JOIN vote_positions vp ON vp.vote_id = cv.id
+         AND vp.legislator_id = $1
+       WHERE ucv.user_id = $2
+         AND ucv.position IN ('Yea', 'Nay')`,
+      [bioguideId, userId]
+    ));
+  } else {
+    // Senate: match by last_name + party initial (LIS IDs differ from bioguide)
+    const lastName = name.split(',')[0].trim();
+    const partyInitial = party.startsWith('Democrat') ? 'D'
+      : party.startsWith('Republican') ? 'R'
+      : 'I';
+
+    ({ rows } = await pool.query(
+      `SELECT
+         COUNT(*) FILTER (WHERE
+           (ucv.position = 'Yea' AND vp.position IN ('Yea', 'Aye')) OR
+           (ucv.position = 'Nay' AND vp.position IN ('Nay', 'No'))
+         )::integer AS agree_count,
+         COUNT(*)::integer AS total_count
+       FROM user_congressional_votes ucv
+       JOIN congressional_votes cv ON cv.id = ucv.congressional_vote_id
+       JOIN vote_positions vp ON vp.vote_id = cv.id
+         AND vp.last_name = $1
+         AND vp.party = $2
+       WHERE ucv.user_id = $3
+         AND ucv.position IN ('Yea', 'Nay')`,
+      [lastName, partyInitial, userId]
+    ));
+  }
+
+  const agree = rows[0].agree_count;
+  const total = rows[0].total_count;
+  const percentage = total > 0 ? Math.round((agree / total) * 100) : null;
+
+  return { agree, total, percentage };
+}
+
+module.exports = { getMembers, getCachedMembers, fetchAndCacheMembers, mapApiMember, getMemberDetail, getMemberAgreement };

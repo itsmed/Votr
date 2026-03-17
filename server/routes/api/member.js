@@ -1,7 +1,7 @@
 'use strict';
 
 const express = require('express');
-const { getMembers, getMemberDetail } = require('../../services/memberService');
+const { getMembers, getMemberDetail, getMemberAgreement } = require('../../services/memberService');
 
 const router = express.Router();
 
@@ -24,6 +24,34 @@ router.get('/', async (req, res) => {
   } catch (err) {
     console.error('GET /api/member error:', err);
     res.status(500).json({ error: 'Failed to retrieve members' });
+  }
+});
+
+/**
+ * GET /api/member/:bioguideId/agreement
+ *
+ * Returns how often the authenticated user's congressional votes agree with
+ * this member's votes. Only Yea/Nay user votes are counted.
+ *
+ * Response 200:
+ *   { agree: number, total: number, percentage: number|null }
+ *
+ * Response 401:
+ *   { error: string }
+ *
+ * Response 500:
+ *   { error: string }
+ */
+router.get('/:bioguideId/agreement', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  try {
+    const result = await getMemberAgreement(req.user.id, req.params.bioguideId);
+    res.json(result);
+  } catch (err) {
+    console.error('GET /api/member/:bioguideId/agreement error:', err);
+    res.status(500).json({ error: 'Failed to compute agreement' });
   }
 });
 

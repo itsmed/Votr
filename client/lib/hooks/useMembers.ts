@@ -1,5 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchMembers, fetchMemberDetail, type Member, type MemberDetail } from '@/lib/api/members';
+import {
+  fetchMembers,
+  fetchMemberDetail,
+  fetchMemberAgreement,
+  type Member,
+  type MemberDetail,
+  type AgreementResponse,
+} from '@/lib/api/members';
 
 export interface UseMembersResult {
   senators: Member[];
@@ -34,4 +41,19 @@ export function useMemberDetail(bioguideId: string): UseMemberDetailResult {
   });
 
   return { member: data?.member ?? null, isLoading, isError };
+}
+
+interface UseMemberAgreementResult {
+  agreement: AgreementResponse | null;
+  isLoading: boolean;
+}
+
+export function useMemberAgreement(bioguideId: string, enabled: boolean): UseMemberAgreementResult {
+  const { data, isLoading } = useQuery({
+    queryKey: ['member-agreement', bioguideId],
+    queryFn: () => fetchMemberAgreement(bioguideId),
+    enabled,
+  });
+
+  return { agreement: data ?? null, isLoading };
 }
