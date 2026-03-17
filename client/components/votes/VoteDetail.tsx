@@ -26,9 +26,18 @@ function findPosition(
   rep: Member,
   positions: Record<string, VotePositionRow[]>
 ): string | null {
+  const repLastName = rep.name.split(',')[0].trim();
 
-  for (const [label] of Object.entries(positions)) {
-    return label;
+  for (const [label, legislators] of Object.entries(positions)) {
+    const found = legislators.some(
+      (l) =>
+        l.legislator_id === rep.api_id ||
+        (l.last_name !== null &&
+          l.party !== null &&
+          l.last_name === repLastName &&
+          rep.party.startsWith(l.party === 'D' ? 'Democrat' : l.party === 'R' ? 'Republican' : 'Independent'))
+    );
+    if (found) return label;
   }
   return null;
 }
