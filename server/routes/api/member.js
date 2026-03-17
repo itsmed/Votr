@@ -1,7 +1,7 @@
 'use strict';
 
 const express = require('express');
-const { getMembers, getMemberDetail, getMemberAgreement } = require('../../services/memberService');
+const { getMembers, getMemberDetail, getMemberAgreement, getMemberSharedVotes } = require('../../services/memberService');
 
 const router = express.Router();
 
@@ -52,6 +52,34 @@ router.get('/:bioguideId/agreement', async (req, res) => {
   } catch (err) {
     console.error('GET /api/member/:bioguideId/agreement error:', err);
     res.status(500).json({ error: 'Failed to compute agreement' });
+  }
+});
+
+/**
+ * GET /api/member/:bioguideId/shared-votes
+ *
+ * Returns all congressional votes that the authenticated user and the specified
+ * member both participated in, with each party's position and an agreement flag.
+ *
+ * Response 200:
+ *   { votes: SharedVote[] }
+ *
+ * Response 401:
+ *   { error: string }
+ *
+ * Response 500:
+ *   { error: string }
+ */
+router.get('/:bioguideId/shared-votes', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  try {
+    const votes = await getMemberSharedVotes(req.user.id, req.params.bioguideId);
+    res.json({ votes });
+  } catch (err) {
+    console.error('GET /api/member/:bioguideId/shared-votes error:', err);
+    res.status(500).json({ error: 'Failed to retrieve shared votes' });
   }
 });
 

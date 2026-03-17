@@ -58,6 +58,30 @@ export interface AgreementResponse {
   percentage: number | null;
 }
 
+export interface SharedVote {
+  vote_id: string;
+  question: string;
+  date: string;
+  category: string | null;
+  user_position: string;
+  member_position: string;
+  agreed: boolean;
+}
+
+export interface SharedVotesResponse {
+  votes: SharedVote[];
+}
+
+export async function fetchMemberSharedVotes(bioguideId: string): Promise<SharedVotesResponse> {
+  const res = await fetch(`${API_URL}/api/member/${bioguideId}/shared-votes`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch shared votes: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
 export async function fetchMemberAgreement(bioguideId: string): Promise<AgreementResponse> {
   const res = await fetch(`${API_URL}/api/member/${bioguideId}/agreement`, {
     credentials: 'include',

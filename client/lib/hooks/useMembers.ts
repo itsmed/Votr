@@ -3,9 +3,11 @@ import {
   fetchMembers,
   fetchMemberDetail,
   fetchMemberAgreement,
+  fetchMemberSharedVotes,
   type Member,
   type MemberDetail,
   type AgreementResponse,
+  type SharedVote,
 } from '@/lib/api/members';
 
 export interface UseMembersResult {
@@ -56,4 +58,20 @@ export function useMemberAgreement(bioguideId: string, enabled: boolean): UseMem
   });
 
   return { agreement: data ?? null, isLoading };
+}
+
+interface UseMemberSharedVotesResult {
+  votes: SharedVote[];
+  isLoading: boolean;
+  isError: boolean;
+}
+
+export function useMemberSharedVotes(bioguideId: string, enabled: boolean): UseMemberSharedVotesResult {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['member-shared-votes', bioguideId],
+    queryFn: () => fetchMemberSharedVotes(bioguideId),
+    enabled,
+  });
+
+  return { votes: data?.votes ?? [], isLoading, isError };
 }

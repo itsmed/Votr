@@ -229,4 +229,81 @@ async function getMemberAgreement(userId, bioguideId) {
   return { agree, total, percentage };
 }
 
-module.exports = { getMembers, getCachedMembers, fetchAndCacheMembers, mapApiMember, getMemberDetail, getMemberAgreement };
+/**
+ * Returns the individual congressional votes that both the user and the
+ * specified member participated in, along with each party's position.
+ * Uses the same matching strategy as getMemberAgreement.
+ *
+ * @param {number} userId
+ * @param {string} bioguideId
+ * @returns {Promise<Array>}
+ */
+async function getMemberSharedVotes(userId, bioguideId) {
+  const memberResult = await pool.query(
+    'SELECT role, name, party FROM members WHERE api_id = $1',
+    [bioguideId]
+  );
+
+  if (memberResult.rows.length === 0) return [];
+
+  const { role, name, party } = memberResult.rows[0];
+  const isSenator = role === 'Senator';
+
+  const agreedExpr = `
+    CASE WHEN
+      (ucv.position = 'Yea' AND vp.position IN ('Yea', 'Aye')) OR
+      (ucv.position = 'Nay' AND vp.position IN ('Nay', 'No'))
+    THEN true ELSE false END`;
+
+  let rows;
+
+  if (!isSenator) {
+    ({ rows } = await pool.query(
+      `SELECT
+         cv.vote_id,
+         cv.question,
+         cv.date,
+         cv.category,
+         ucv.position  AS user_position,
+         vp.position   AS member_position,
+         ${agreedExpr} AS agreed
+       FROM user_congressional_votes ucv
+       JOIN congressional_votes cv ON cv.id = ucv.congressional_vote_id
+       JOIN vote_positions vp ON vp.vote_id = cv.id
+         AND vp.legislator_id = $1
+       WHERE ucv.user_id = $2
+         AND ucv.position IN ('Yea', 'Nay')
+       ORDER BY cv.date DESC`,
+      [bioguideId, userId]
+    ));
+  } else {
+    const lastName = name.split(',')[0].trim();
+    const partyInitial = party.startsWith('Democrat') ? 'D'
+      : party.startsWith('Republican') ? 'R'
+      : 'I';
+
+    ({ rows } = await pool.query(
+      `SELECT
+         cv.vote_id,
+         cv.question,
+         cv.date,
+         cv.category,
+         ucv.position  AS user_position,
+         vp.position   AS member_position,
+         ${agreedExpr} AS agreed
+       FROM user_congressional_votes ucv
+       JOIN congressional_votes cv ON cv.id = ucv.congressional_vote_id
+       JOIN vote_positions vp ON vp.vote_id = cv.id
+         AND vp.last_name = $1
+         AND vp.party    = $2
+       WHERE ucv.user_id = $3
+         AND ucv.position IN ('Yea', 'Nay')
+       ORDER BY cv.date DESC`,
+      [lastName, partyInitial, userId]
+    ));
+  }
+
+  return rows;
+}
+
+module.exports = { getMembers, getCachedMembers, fetchAndCacheMembers, mapApiMember, getMemberDetail, getMemberAgreement, getMemberSharedVotes };

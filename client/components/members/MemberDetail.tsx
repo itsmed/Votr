@@ -1,5 +1,10 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { type MemberDetail, type AgreementResponse } from '@/lib/api/members';
+import { useMemberSharedVotes } from '@/lib/hooks/useMembers';
 
 interface MemberDetailProps {
   member: MemberDetail;
@@ -49,9 +54,15 @@ export default function MemberDetail({ member, agreement }: MemberDetailProps) {
   const latestTerm = member.terms.at(-1);
   const role = latestTerm?.memberType ?? 'Member';
 
-  // directOrderName is "First Last" — grab the first word for informal use in the agreement label
-  const firstName = (member as unknown as Record<string, string>)['directOrderName']?.split(' ')[0]
-    ?? member.name;
+  const [showSharedVotes, setShowSharedVotes] = useState(false);
+  const { votes, isLoading: votesLoading, isError: votesError } = useMemberSharedVotes(
+    member.bioguideId,
+    showSharedVotes
+  );
+
+  // directOrderName is "First Last" — grab the first word for the agreement label
+  const directOrderName = (member as unknown as Record<string, string>)['directOrderName'];
+  const firstName = directOrderName?.split(' ')[0] ?? member.name;
 
   return (
     <div className="flex flex-col gap-6">
@@ -66,7 +77,7 @@ export default function MemberDetail({ member, agreement }: MemberDetailProps) {
         />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold text-gray-900">
-            {member.honorificName ? `${member.honorificName} ` : ''}{(member as unknown as Record<string, string>)['directOrderName']}
+            {member.honorificName ? `${member.honorificName} ` : ''}{directOrderName}
           </h1>
           <p className="mt-0.5 text-sm text-gray-500">{member.state}</p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -87,16 +98,55 @@ export default function MemberDetail({ member, agreement }: MemberDetailProps) {
 
       {/* Agreement with user */}
       {agreement && agreement.percentage !== null && (
-        <div className="flex items-center gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <AgreementPie percentage={agreement.percentage} />
-          <div>
-            <p className="text-sm font-semibold text-gray-900">
-              You agree with {firstName} {agreement.percentage}% of the time
-            </p>
-            <p className="mt-0.5 text-xs text-gray-500">
-              Based on {agreement.total} shared vote{agreement.total !== 1 ? 's' : ''}
-            </p>
+        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+          <div className="flex items-center gap-4">
+            <AgreementPie percentage={agreement.percentage} />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-gray-900">
+                You agree with {firstName} {agreement.percentage}% of the time
+              </p>
+              <button
+                onClick={() => setShowSharedVotes((v) => !v)}
+                className="mt-0.5 text-xs text-blue-600 hover:underline"
+              >
+                Based on {agreement.total} shared vote{agreement.total !== 1 ? 's' : ''}
+                {' '}— {showSharedVotes ? 'hide' : 'show'}
+              </button>
+            </div>
           </div>
+
+          {showSharedVotes && (
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              {votesLoading && (
+                <p className="text-sm text-gray-400">Loading shared votes…</p>
+              )}
+              {votesError && (
+                <p className="text-sm text-red-500">Failed to load shared votes.</p>
+              )}
+              {!votesLoading && !votesError && votes.length === 0 && (
+                <p className="text-sm text-gray-400">No shared votes found.</p>
+              )}
+              {!votesLoading && !votesError && votes.length > 0 && (
+                <ul className="flex flex-col divide-y divide-gray-100">
+                  {votes.map((v) => (
+                    <li key={v.vote_id}>
+                      <Link
+                        href={`/votes/${encodeURIComponent(v.vote_id)}`}
+                        className="flex items-start justify-between gap-3 py-2.5 hover:bg-gray-50 -mx-4 px-4 transition-colors"
+                      >
+                        <span className="text-sm text-gray-900 leading-snug">{v.question}</span>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          v.agreed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {v.agreed ? 'Agreed' : 'Disagreed'}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       )}
 
