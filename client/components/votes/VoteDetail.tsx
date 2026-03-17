@@ -1,5 +1,10 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { type VoteRow, type VotePositionRow } from '@/lib/api/congressionalVotes';
 import { type Member } from '@/lib/api/members';
+import { fetchBillDetail, type BillDetailResponse } from '@/lib/api/bills';
+import BillDetail from '@/components/bills/BillDetail';
 
 const CHAMBER_LABEL: Record<string, string> = { h: 'House', s: 'Senate' };
 
@@ -26,6 +31,107 @@ function findPosition(
     return label;
   }
   return null;
+}
+
+function ChevronDownIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+interface ViewMoreSectionProps {
+  vote: VoteRow;
+}
+
+function ViewMoreSection({ vote }: ViewMoreSectionProps) {
+  const [open, setOpen] = useState(false);
+  const [data, setData] = useState<BillDetailResponse | null>(null);
+  const [textVersions, setTextVersions] = useState<Parameters<typeof BillDetail>[0]['textVersions']>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [isTextLoading, setIsTextLoading] = useState(false);
+  const [isTextError, setIsTextError] = useState(false);
+
+  useEffect(() => {
+    if (!vote.bill_congress || !vote.bill_type || !vote.bill_number) return;
+    setIsLoading(true);
+    setIsError(false);
+    fetchBillDetail(vote.bill_congress, vote.bill_type, String(vote.bill_number))
+      .then(setData)
+      .catch(() => setIsError(true))
+      .finally(() => setIsLoading(false));
+  }, [vote.bill_congress, vote.bill_type, vote.bill_number]);
+
+  if (!vote.bill_congress || !vote.bill_type || !vote.bill_number) return null;
+
+  function handleToggle() {
+    setOpen((prev) => !prev);
+  }
+
+  async function handleFetchText() {
+    if (!vote.bill_congress || !vote.bill_type || !vote.bill_number) return;
+    setIsTextLoading(true);
+    setIsTextError(false);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}/api/bill/${vote.bill_congress}/${vote.bill_type}/${vote.bill_number}/text`
+      );
+      if (!res.ok) throw new Error('Failed');
+      const json = await res.json();
+      setTextVersions(json.textVersions ?? []);
+    } catch {
+      setIsTextError(true);
+    } finally {
+      setIsTextLoading(false);
+    }
+  }
+
+  const fallbackLabel = `${vote.bill_type.toUpperCase()} ${vote.bill_number} · ${vote.bill_congress}th Congress`;
+
+  return (
+    <section>
+      <button
+        onClick={handleToggle}
+        className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+      >
+        <ChevronDownIcon open={open} />
+        View More
+      </button>
+
+      {open && (
+        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
+          {isLoading && <p className="text-sm text-gray-400">Loading bill details…</p>}
+          {isError && <p className="text-sm text-red-500">Failed to load bill details.</p>}
+          {data && (
+            <BillDetail
+              bill={data.bill}
+              actions={data.actions}
+              summaries={data.summaries}
+              textVersions={textVersions}
+              isTextLoading={isTextLoading}
+              isTextError={isTextError}
+              onFetchText={handleFetchText}
+              fallbackLabel={fallbackLabel}
+            />
+          )}
+        </div>
+      )}
+    </section>
+  );
 }
 
 interface VoteDetailProps {
@@ -157,17 +263,8 @@ export default function VoteDetail({ vote, positions, myReps }: VoteDetailProps)
         )
       )}
 
-      {/* Source link */}
-      {vote.source_url && (
-        <a
-          href={vote.source_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-sm text-blue-600 underline hover:text-blue-800"
-        >
-          Official source →
-        </a>
-      )}
+      {/* View More — fetches bill details on demand (only for bill votes) */}
+      <ViewMoreSection vote={vote} />
     </div>
   );
 }
