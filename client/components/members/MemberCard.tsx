@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import Image from 'next/image';
+import { Link } from 'react-router-dom';
 import { type Member } from '@/lib/api/members';
 
 const PARTY_STYLES: Record<string, string> = {
@@ -22,12 +21,12 @@ interface MemberCardProps {
  */
 export default function MemberCard({ member }: MemberCardProps) {
   const { name, district, role, party } = member;
-  
+
   return (
-    <Link href={`/members/${member.api_id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg">
+    <Link to={`/members/${member.api_id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg">
     <article className="flex items-start justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm transition-shadow hover:shadow-md">
       <div className="min-w-0">
-        <Image
+        <img
           className="h-12 w-12 rounded-full object-cover"
           src={member.photo_url ?? '/placeholder-profile.jpg'}
           alt={`${name}'s profile picture`}

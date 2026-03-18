@@ -1,4 +1,3 @@
-'use client';
 
 import { useState, useEffect } from 'react';
 import { type VoteRow, type VotePositionRow, type UserCongressionalVote, type UserVotePosition } from '@/lib/api/congressionalVotes';

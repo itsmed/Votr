@@ -1,4 +1,3 @@
-'use client';
 
 import { useState } from 'react';
 import { findRepresentatives, type FindRepsResponse, type Legislator } from '@/lib/api/representatives';

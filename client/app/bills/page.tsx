@@ -1,4 +1,3 @@
-'use client';
 
 import { useBills } from '@/lib/hooks/useBills';
 import BillList from '@/components/bills/BillList';

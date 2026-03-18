@@ -1,25 +1,19 @@
-'use client';
-
-import { use } from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useMemberDetail, useMemberAgreement } from '@/lib/hooks/useMembers';
 import { useUser } from '@/lib/context/UserContext';
 import MemberDetail from '@/components/members/MemberDetail';
 
-interface PageParams {
-  bioguideId: string;
-}
-
-export default function MemberDetailPage({ params }: { params: Promise<PageParams> }) {
-  const { bioguideId } = use(params);
-  const { member, isLoading, isError } = useMemberDetail(bioguideId);
+export default function MemberDetailPage() {
+  const { bioguideId } = useParams<{ bioguideId: string }>();
+  const { member, isLoading, isError } = useMemberDetail(bioguideId!);
   const { user } = useUser();
-  const { agreement } = useMemberAgreement(bioguideId, user !== null);
+  const { agreement } = useMemberAgreement(bioguideId!, user !== null);
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <header className="shrink-0 border-b border-gray-200 bg-white px-6 py-4">
-        <Link href="/members" className="text-sm text-blue-600 hover:underline">
+        <Link to="/members" className="text-sm text-blue-600 hover:underline">
           ← Members
         </Link>
       </header>

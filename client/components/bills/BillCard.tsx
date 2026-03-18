@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { type Bill } from '@/lib/api/bills';
 
 function billDetailHref(bill: Bill): string {
@@ -47,7 +47,7 @@ export default function BillCard({ bill }: BillCardProps) {
   const billLabel = bill_type && bill_number ? `${bill_type} ${bill_number}` : null;
 
   return (
-    <Link href={billDetailHref(bill)} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg">
+    <Link to={billDetailHref(bill)} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg">
     <article className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">

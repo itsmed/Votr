@@ -1,7 +1,6 @@
-'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { useUser } from '@/lib/context/UserContext';
 
 export default function PreferencesPage() {
@@ -28,7 +27,7 @@ export default function PreferencesPage() {
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <p className="text-sm text-gray-500">
           Please{' '}
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" className="text-blue-600 hover:underline">
             log in
           </Link>{' '}
           to view preferences.

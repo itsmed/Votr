@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { type VoteRow } from '@/lib/api/congressionalVotes';
 
 const CHAMBER_LABEL: Record<string, string> = {
@@ -18,7 +18,7 @@ interface VotePreviewProps {
 export default function VotePreview({ vote }: VotePreviewProps) {
   return (
     <Link
-      href={`/votes/${encodeURIComponent(vote.vote_id)}`}
+      to={`/votes/${encodeURIComponent(vote.vote_id)}`}
       className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
     >
       <article className="rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm transition-shadow hover:shadow-md">

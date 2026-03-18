@@ -1,4 +1,3 @@
-'use client';
 
 import { useState } from 'react';
 import { useVotes } from '@/lib/hooks/useVotes';

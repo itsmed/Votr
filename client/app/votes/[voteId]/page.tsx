@@ -1,16 +1,9 @@
-'use client';
-
-import { use } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Link, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useVoteDetail, useUserCongressionalVote } from '@/lib/hooks/useVotes';
 import { useUser } from '@/lib/context/UserContext';
 import { useMyReps } from '@/lib/hooks/useMyReps';
 import VoteDetail from '@/components/votes/VoteDetail';
-
-interface PageParams {
-  voteId: string;
-}
 
 function ChevronLeftIcon() {
   return (
@@ -32,10 +25,10 @@ function ChevronRightIcon() {
   );
 }
 
-export default function VoteDetailPage({ params }: { params: Promise<PageParams> }) {
-  const { voteId } = use(params);
-  const router = useRouter();
-  const decodedId = decodeURIComponent(voteId);
+export default function VoteDetailPage() {
+  const { voteId } = useParams<{ voteId: string }>();
+  const navigate = useNavigate();
+  const decodedId = decodeURIComponent(voteId!);
 
   const { data, isLoading, isError } = useVoteDetail(decodedId);
   const { user } = useUser();
@@ -55,14 +48,14 @@ export default function VoteDetailPage({ params }: { params: Promise<PageParams>
   const nextId = data?.next_vote_id;
 
   function navigateTo(id: string) {
-    router.push(`/votes/${encodeURIComponent(id)}`);
+    navigate(`/votes/${encodeURIComponent(id)}`);
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <header className="shrink-0 border-b border-gray-200 bg-white px-4 py-3">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <Link href="/votes" className="text-sm text-blue-600 hover:underline">
+          <Link to="/votes" className="text-sm text-blue-600 hover:underline">
             ← Votes
           </Link>
 

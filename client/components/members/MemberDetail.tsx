@@ -1,8 +1,6 @@
-'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { type MemberDetail, type AgreementResponse } from '@/lib/api/members';
 import { useMemberSharedVotes } from '@/lib/hooks/useMembers';
 
@@ -68,7 +66,7 @@ export default function MemberDetail({ member, agreement }: MemberDetailProps) {
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-start gap-4">
-        <Image
+        <img
           src={member.depiction?.imageUrl ?? '/placeholder-profile.jpg'}
           alt={`${member.name}'s profile picture`}
           width={80}
@@ -131,7 +129,7 @@ export default function MemberDetail({ member, agreement }: MemberDetailProps) {
                   {votes.map((v) => (
                     <li key={v.vote_id}>
                       <Link
-                        href={`/votes/${encodeURIComponent(v.vote_id)}`}
+                        to={`/votes/${encodeURIComponent(v.vote_id)}`}
                         className="flex items-start justify-between gap-3 py-2.5 hover:bg-gray-50 -mx-4 px-4 transition-colors"
                       >
                         <span className="text-sm text-gray-900 leading-snug">{v.question}</span>

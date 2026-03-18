@@ -1,12 +1,9 @@
-'use client';
-
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '@/lib/context/UserContext';
 import { useMyReps } from '@/lib/hooks/useMyReps';
 import { useQueryClient } from '@tanstack/react-query';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
 
 const NAV_LINKS = [
   { href: '/bills', label: 'Bills' },
@@ -35,8 +32,8 @@ function GearIcon() {
 }
 
 export default function NavBar() {
-  const pathname = usePathname();
-  const router = useRouter();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, isLoading } = useUser();
 
@@ -51,7 +48,7 @@ export default function NavBar() {
     await fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
     queryClient.setQueryData(['currentUser'], null);
     queryClient.removeQueries({ queryKey: ['myReps'] });
-    router.push('/');
+    navigate('/');
   }
 
   const allReps = reps ? [...reps.senators, ...reps.representatives] : [];
@@ -59,7 +56,7 @@ export default function NavBar() {
   return (
     <nav className="shrink-0 border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 sm:px-6">
-        <Link href="/" className="py-4 text-sm font-semibold text-gray-900 hover:text-blue-600">
+        <Link to="/" className="py-4 text-sm font-semibold text-gray-900 hover:text-blue-600">
           PollUs
         </Link>
 
@@ -69,7 +66,7 @@ export default function NavBar() {
             return (
               <Link
                 key={href}
-                href={href}
+                to={href}
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-blue-50 text-blue-600'
@@ -90,7 +87,7 @@ export default function NavBar() {
                 <>
                   <Link
                     key={rep.api_id}
-                    href={href}
+                    to={href}
                     className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                       isActive
                       ? 'bg-blue-50 text-blue-600'
@@ -103,7 +100,7 @@ export default function NavBar() {
             })
           ) : (
             <Link
-              href="/find-my-reps"
+              to="/find-my-reps"
               className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 pathname === '/find-my-reps' || pathname.startsWith('/find-my-reps/')
                   ? 'bg-blue-50 text-blue-600'
@@ -119,7 +116,7 @@ export default function NavBar() {
           {!isLoading && user && (
             <>
               <Link
-                href="/preferences"
+                to="/preferences"
                 title="Preferences"
                 className={`rounded-md p-2 transition-colors ${
                   pathname === '/preferences'
@@ -130,7 +127,7 @@ export default function NavBar() {
                 <GearIcon />
               </Link>
               <Link
-                href="/profile"
+                to="/profile"
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   pathname === '/profile'
                     ? 'bg-blue-50 text-blue-600'
@@ -149,7 +146,7 @@ export default function NavBar() {
           )}
           {!isLoading && !user && (
             <Link
-              href="/login"
+              to="/login"
               className="rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
             >
               Log in
