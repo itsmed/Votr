@@ -30,11 +30,14 @@ details, vote on bills, and compare their votes to their representatives' voting
   voting records, stances on key issues, and contact information to better
   understand their representatives and hold them accountable.
 - There is a civics quiz feature that allows users to test their knowledge of the legislative process, key issues, and their representatives to promote civic education and engagement.
-- Users can provide feedback and suggestions for improving the application and its features to help shape the future development of PollUs and ensure that it meets the needs and preferences of its users.
+- Users can provide feedback and suggestions for improving the application and
+  its features to help shape the future development of PollUs and ensure that it
+  meets the needs and preferences of its users.
+- Both a web and mobile application.
 
 ## Technologies Used
 - Language: Typescript
-- Framework: NextJS (^16.1.6), App Router
+- Framework: React, Vite, ReactNative for mobile
 - Styling: Tailwind CSS
 - Component Library: shadcn/ui
 - Data Fetching: React Query
