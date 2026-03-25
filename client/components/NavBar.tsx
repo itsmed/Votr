@@ -136,21 +136,15 @@ export default function NavBar() {
               >
                 {user.name}
               </Link>
-              <button
-                onClick={handleLogout}
-                className="rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
-              >
-                Log out
-              </button>
             </>
           )}
-          {!isLoading && !user && (
-            <Link
-              to="/login"
+          {!isLoading && (
+            <button
+              onClick={user ? handleLogout : () => navigate('/login')}
               className="rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
             >
-              Log in
-            </Link>
+              {user ? 'Log out' : 'Log in'}
+            </button>
           )}
         </div>
       </div>
