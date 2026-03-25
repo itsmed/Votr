@@ -66,3 +66,4 @@ Temporary Items
 .next/
 .nuxt/
 .turbo/
+package-lock.json

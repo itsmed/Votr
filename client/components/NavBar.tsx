@@ -57,7 +57,7 @@ export default function NavBar() {
     <nav className="shrink-0 border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 sm:px-6">
         <Link to="/" className="py-4 text-sm font-semibold text-gray-900 hover:text-blue-600">
-          PollUs
+          Polis
         </Link>
 
         <div className="flex items-center gap-1">
