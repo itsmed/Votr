@@ -26,6 +26,16 @@ Create `server/.env.development` for local development (already exists, not comm
 | `DATABASE_URL` | Full PostgreSQL connection string |
 | `CONGRESS_API_KEY` | API key from [api.congress.gov](https://api.congress.gov/sign-up/) |
 | `GEOCOD_API_KEY` | API key from [Geocodio](https://www.geocod.io/) for address → district lookup |
+| `API_URL` | Public base URL of this server (e.g. `http://localhost:4000`) — used to build OAuth callback URLs |
+| `CLIENT_URL` | Public base URL of the frontend (e.g. `http://localhost:3000`) — OAuth redirects here after sign-in |
+| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth 2.0 client secret |
+| `APPLE_CLIENT_ID` | Apple Sign In service ID (reverse-domain format) |
+| `APPLE_TEAM_ID` | Apple Developer team ID |
+| `APPLE_KEY_ID` | Apple Sign In key ID |
+| `APPLE_PRIVATE_KEY` | Contents of the Apple Sign In `.p8` private key (newlines as `\n`) |
+
+`API_URL`, `CLIENT_URL`, and the `GOOGLE_*` / `APPLE_*` vars are only required when running with real OAuth. In development the dev-user auto-login bypasses OAuth entirely.
 
 ## Database
 
@@ -68,9 +78,25 @@ After SQL migrations, `db:migrate` runs `server/db/seedVotes.js` which walks eve
 
 ---
 
-## Dev User
+## Authentication
 
-In development there is no OAuth/login flow. A seed user is created automatically by migration `004_user_profile.sql`:
+### Production — OAuth (Google & Apple)
+
+Users sign in via Google or Apple OAuth. The flow is:
+
+1. Client sends the user to `GET /api/auth/google` or `GET /api/auth/apple`.
+2. The provider redirects back to the matching `/callback` route.
+3. The server calls `findOrCreateUser` — inserts or updates a row in `users` keyed on email.
+4. An auth cookie is set (1-year, `httpOnly`, `sameSite: lax`, `secure` in production).
+5. The user is redirected to `CLIENT_URL/profile`.
+
+On error the user is redirected to `CLIENT_URL/?auth_error=1`.
+
+Passport strategies are registered in `routes/api/auth.js` and `passport.initialize()` is mounted in `app.js`. No session store is used — the cookie is the sole auth mechanism.
+
+### Development — Auto-login
+
+In development there is no OAuth flow. A seed user is created automatically by migration `004_user_profile.sql`:
 
 | Field | Value |
 |---|---|
@@ -114,7 +140,7 @@ Registered users of the application.
 | `senator_ids` | `INTEGER[]` | Not null, default `{}` — integer PKs from `members` | 007 |
 | `congress_member_ids` | `INTEGER[]` | Not null, default `{}` — integer PKs from `members` | 007 |
 
-`senator_ids` and `congress_member_ids` are set by `PATCH /api/auth/me` when the user looks up their address on the Find My Reps page. The client sends bioguide ID strings (e.g. `["Y000064"]`) and the server resolves them to integer member IDs before storing.
+`senator_ids` and `congress_member_ids` are set by `PATCH /api/auth/me` when the user saves their address (from the home page or profile page). The client sends Congress.gov member ID strings (e.g. `["Y000064"]`) and the server resolves them to integer member IDs before storing.
 
 ---
 
@@ -197,6 +223,38 @@ members (independent — populated from Congress.gov API cache)
 ---
 
 ## API Routes
+
+### `GET /api/auth/google`
+
+Initiates Google OAuth. Redirects the browser to Google's consent screen.
+
+---
+
+### `GET /api/auth/google/callback`
+
+Google redirects here after the user consents. Creates or updates the user record, sets the auth cookie, and redirects to `CLIENT_URL/profile`. On failure redirects to `CLIENT_URL/?auth_error=1`.
+
+---
+
+### `GET /api/auth/apple`
+
+Initiates Apple Sign In. Redirects the browser to Apple's consent screen.
+
+---
+
+### `POST /api/auth/apple/callback`
+
+Apple posts here after the user consents (Apple uses POST for its callback). Creates or updates the user record, sets the auth cookie, and redirects to `CLIENT_URL/profile`. On failure redirects to `CLIENT_URL/?auth_error=1`.
+
+---
+
+### `POST /api/auth/logout`
+
+Clears the auth cookie.
+
+**Response `200 OK`:** `{ "ok": true }`
+
+---
 
 ### `GET /api/auth/me`
 
@@ -311,19 +369,41 @@ Returns all congressional members for the current Congress (`CURRENT_CONGRESS = 
 
 ```
 server/
-├── app.js                      # Express app setup and route mounting
+├── app.js                      # Express app setup, passport init, route mounting
 ├── bin/www                     # HTTP server entry point (port 4000)
 ├── CONSTANTS.ts                # Shared constants (e.g. CURRENT_CONGRESS)
 ├── tsconfig.json               # TypeScript config for .ts files in the server
 ├── db/
-│   └── index.js                # pg connection pool
+│   ├── index.js                # pg connection pool
+│   ├── setup.js                # Creates all tables (pnpm db:setup)
+│   └── seedVotes.js            # Seeds congressional vote data from JSON files
+├── middleware/
+│   └── auth.js                 # Reads auth cookie → attaches req.user; dev auto-login
+├── models/                     # Table definitions (CREATE TABLE IF NOT EXISTS SQL)
+│   ├── User.js
+│   ├── Member.js
+│   ├── Bill.js
+│   ├── Vote.js
+│   ├── Comment.js
+│   ├── CongressionalVote.js
+│   └── VotePosition.js
 ├── routes/
 │   └── api/
-│       └── member.js           # GET /api/member handler
+│       ├── auth.js             # Auth routes: OAuth flow, /me, /me/reps, logout
+│       ├── bill.js             # GET /api/bill, bill detail, text, votes
+│       ├── member.js           # GET /api/member, member detail
+│       ├── representatives.js  # POST /find-representative-and-senator
+│       └── votes.js            # User vote CRUD
 ├── services/
-│   └── memberService.js        # Cache-check → API-fetch → DB-write logic
+│   ├── billService.js          # Bill cache-check → API-fetch → DB-write logic
+│   ├── geocodioService.js      # Address → congressional district via Geocodio
+│   ├── memberService.js        # Member cache-check → API-fetch → DB-write logic
+│   ├── userCongressionalVoteService.js  # Compares user votes to rep votes
+│   └── voteService.js          # User vote read/write helpers
 └── tests/
-    └── memberService.test.js   # Unit tests for memberService
+    ├── billService.test.js
+    ├── geocodioService.test.js
+    └── memberService.test.js
 ```
 
 ### `CONSTANTS.ts`
@@ -336,10 +416,29 @@ server/
 
 | Export | Description |
 |---|---|
-| `getMembers()` | Top-level function: returns from cache or fetches from API |
+| `getMembers()` | Returns from cache or fetches from API |
 | `getCachedMembers()` | Queries the `members` table directly |
-| `fetchAndCacheMembers()` | Fetches all pages from `/member/congress/119`, replaces DB table |
-| `mapApiMember(apiMember)` | Maps a Congress.gov API member object to the DB schema |
+| `fetchAndCacheMembers()` | Fetches all pages from `/member/congress/119`, replaces DB table in a transaction |
+| `mapApiMember(m)` | Maps a Congress.gov API member object to the DB schema |
+| `getMemberDetail(id)` | Fetches a single member by Congress.gov ID from the API |
+
+### Service: `billService.js`
+
+| Export | Description |
+|---|---|
+| `getBills()` | Returns from cache or fetches from API |
+| `getCachedBills()` | Queries `bills` filtered to `CURRENT_CONGRESS` |
+| `fetchAndCacheBills()` | Fetches from `/bill/119`, upserts each bill by `api_id` |
+| `mapApiBill(b)` | Maps a Congress.gov API bill object to the DB schema |
+| `getBillDetail(congress, type, number)` | Fetches actions and summaries in parallel from the API |
+| `getBillText(congress, type, number)` | Fetches available text versions from the API |
+
+### Service: `geocodioService.js`
+
+| Export | Description |
+|---|---|
+| `findLegislators(address)` | Geocodes an address via Geocodio and returns mapped legislators |
+| `mapGeocodioLegislator(leg, state, district)` | Maps a Geocodio legislator object to the app schema |
 
 ---
 
@@ -351,11 +450,45 @@ Tests are in `server/tests/` and run with Jest. The `pg` pool and `fetch` are fu
 pnpm test
 ```
 
-**Test coverage:**
+### Coverage report
 
-| Area | Cases |
+**`memberService.test.js`** — 15 cases
+
+| Function | Cases |
 |---|---|
-| `mapApiMember` | House member, Senator (last-term chamber, null district), chamber switch, missing party, missing depiction |
-| `getCachedMembers` | Returns rows (including photo_url), empty result, DB error propagation |
-| `fetchAndCacheMembers` | Missing API key, fetches `/congress/119`, DELETE+INSERT replace, pagination, DB rollback on error, non-OK API response, empty API result |
+| `mapApiMember` | House member, Senator (role from last term, null district), chamber switch, missing party, missing depiction |
+| `getCachedMembers` | Returns rows with `photo_url`, empty result, DB error propagation |
+| `fetchAndCacheMembers` | Missing API key, fetches `/member/congress/119`, DELETE + INSERT in transaction, pagination across pages, DB rollback on error, non-OK API response, empty API result |
 | `getMembers` | Cache hit (no API call), cache miss (calls API) |
+| `getMemberDetail` | Missing API key, correct URL construction, returns member, null when missing from response, non-OK response |
+
+**`billService.test.js`** — 20 cases
+
+| Function | Cases |
+|---|---|
+| `mapApiBill` | House bill, `api_id` format, missing title defaults to `"Untitled"`, missing `latestAction` nulls action fields, numeric bill number coerced to string, missing URL |
+| `getCachedBills` | Returns rows, filters by current congress, empty result, DB error propagation |
+| `fetchAndCacheBills` | Missing API key, fetches `/bill/119` and upserts, multiple bills (one query per bill), empty API result (no DB calls), non-OK API response |
+| `getBills` | Cache hit (no API call), cache miss (calls API) |
+| `getBillDetail` | Missing API key, fetches actions + summaries in parallel, null bill when not in DB, empty arrays when API omits fields, non-OK actions response, correct `api_id` query |
+| `getBillText` | Missing API key, fetches `/text` and returns versions, empty array when API omits field, non-OK response |
+
+**`geocodioService.test.js`** — 13 cases
+
+| Function | Cases |
+|---|---|
+| `mapGeocodioLegislator` | Representative (role, district, party, photo), Senator (role, null district, name, ID), missing party defaults to `"Unknown"`, missing photo null, null district number |
+| `findLegislators` | Missing API key, calls Geocodio with `cd119` field, returns address + state + legislators, one rep + one senator with correct district, non-OK API response, no results, no congressional district in result, picks district with highest proportion, encodes address in query string |
+
+**Not yet covered:**
+
+| Area | Notes |
+|---|---|
+| `routes/api/auth.js` | OAuth callback logic, `/me`, `PATCH /me`, `/me/reps`, saved-member routes |
+| `routes/api/bill.js` | Route handler wiring |
+| `routes/api/member.js` | Route handler wiring |
+| `routes/api/votes.js` | Vote read/write routes |
+| `routes/api/representatives.js` | Address lookup route |
+| `services/voteService.js` | User vote helpers |
+| `services/userCongressionalVoteService.js` | Vote comparison logic |
+| `middleware/auth.js` | Cookie read, dev auto-login |

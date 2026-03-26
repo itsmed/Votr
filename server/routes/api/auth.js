@@ -1,9 +1,118 @@
 'use strict';
 
 const express = require('express');
+const passport = require('passport');
+const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
+const AppleStrategy = require('passport-apple');
 const pool = require('../../db');
 
 const router = express.Router();
+
+const COOKIE_NAME = 'pollus_user_id';
+const COOKIE_MAX_AGE = 365 * 24 * 60 * 60 * 1000;
+const CLIENT_URL = process.env.CLIENT_URL ?? 'http://localhost:3000';
+
+/**
+ * Finds an existing user by email or creates a new one.
+ * @param {{ email: string, name: string }} profile
+ * @returns {Promise<number>} user id
+ */
+async function findOrCreateUser({ email, name }) {
+  const { rows } = await pool.query(
+    `INSERT INTO users (email, name)
+     VALUES ($1, $2)
+     ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
+     RETURNING id`,
+    [email, name]
+  );
+  return rows[0].id;
+}
+
+// ── Google ────────────────────────────────────────────────────────────────────
+
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: `${process.env.API_URL ?? 'http://localhost:4000'}/api/auth/google/callback`,
+    },
+    async (_accessToken, _refreshToken, profile, done) => {
+      try {
+        const email = profile.emails?.[0]?.value;
+        if (!email) return done(new Error('No email returned from Google'));
+        const id = await findOrCreateUser({ email, name: profile.displayName });
+        done(null, id);
+      } catch (err) {
+        done(err);
+      }
+    }
+  )
+);
+
+// ── Apple ─────────────────────────────────────────────────────────────────────
+
+passport.use(
+  new AppleStrategy(
+    {
+      clientID: process.env.APPLE_CLIENT_ID,
+      teamID: process.env.APPLE_TEAM_ID,
+      keyID: process.env.APPLE_KEY_ID,
+      privateKeyString: process.env.APPLE_PRIVATE_KEY,
+      callbackURL: `${process.env.API_URL ?? 'http://localhost:4000'}/api/auth/apple/callback`,
+      passReqToCallback: false,
+    },
+    async (_accessToken, _refreshToken, _idToken, profile, done) => {
+      try {
+        const email = profile.email;
+        if (!email) return done(new Error('No email returned from Apple'));
+        const name = profile.name
+          ? `${profile.name.firstName ?? ''} ${profile.name.lastName ?? ''}`.trim()
+          : email;
+        const id = await findOrCreateUser({ email, name });
+        done(null, id);
+      } catch (err) {
+        done(err);
+      }
+    }
+  )
+);
+
+// Passport requires serialize/deserialize even without sessions (we use cookies directly)
+passport.serializeUser((id, done) => done(null, id));
+passport.deserializeUser((id, done) => done(null, id));
+
+// Shared callback handler: sets the user-id cookie and redirects to profile
+function oauthCallback(req, res, next) {
+  passport.authenticate(req.params.provider, { session: false }, (err, userId) => {
+    if (err || !userId) return res.redirect(`${CLIENT_URL}/?auth_error=1`);
+    res.cookie(COOKIE_NAME, userId, {
+      httpOnly: true,
+      maxAge: COOKIE_MAX_AGE,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    });
+    res.redirect(`${CLIENT_URL}/profile`);
+  })(req, res, next);
+}
+
+// GET /api/auth/google — initiate Google OAuth
+router.get('/google', passport.authenticate('google', { scope: ['email', 'profile'], session: false }));
+
+// GET /api/auth/google/callback
+router.get('/google/callback', (req, res, next) => {
+  req.params.provider = 'google';
+  oauthCallback(req, res, next);
+});
+
+// POST /api/auth/apple — initiate Apple OAuth (Apple posts back, so both GET and POST needed)
+router.get('/apple', passport.authenticate('apple', { session: false }));
+
+// POST /api/auth/apple/callback
+router.post('/apple/callback', (req, res, next) => {
+  req.params.provider = 'apple';
+  oauthCallback(req, res, next);
+});
 
 // POST /api/auth/logout — clears the session cookie
 router.post('/logout', (req, res) => {
