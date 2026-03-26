@@ -4,6 +4,7 @@ import { useVoteDetail, useUserCongressionalVote } from '@/lib/hooks/useVotes';
 import { useUser } from '@/lib/context/UserContext';
 import { useMyReps } from '@/lib/hooks/useMyReps';
 import VoteDetail from '@/components/votes/VoteDetail';
+import { pageShell, pageHeaderColors, btn, textLink, feedback } from '@/lib/styles/tokens';
 
 function ChevronLeftIcon() {
   return (
@@ -52,10 +53,10 @@ export default function VoteDetailPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="shrink-0 border-b border-gray-200 bg-white px-4 py-3">
+    <div className={pageShell}>
+      <header className={`shrink-0 ${pageHeaderColors} px-4 py-3`}>
         <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <Link to="/votes" className="text-sm text-blue-600 hover:underline">
+          <Link to="/votes" className={`text-sm ${textLink} hover:underline`}>
             ← Votes
           </Link>
 
@@ -64,7 +65,7 @@ export default function VoteDetailPage() {
               onClick={() => prevId && navigateTo(prevId)}
               disabled={!prevId}
               aria-label="Previous vote"
-              className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
+              className={`p-1.5 ${btn.ghost} disabled:cursor-not-allowed disabled:opacity-30`}
             >
               <ChevronLeftIcon />
             </button>
@@ -72,7 +73,7 @@ export default function VoteDetailPage() {
               onClick={() => nextId && navigateTo(nextId)}
               disabled={!nextId}
               aria-label="Next vote"
-              className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
+              className={`p-1.5 ${btn.ghost} disabled:cursor-not-allowed disabled:opacity-30`}
             >
               <ChevronRightIcon />
             </button>
@@ -81,10 +82,8 @@ export default function VoteDetailPage() {
       </header>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-        {isLoading && <p className="text-sm text-gray-400">Loading vote…</p>}
-        {isError && (
-          <p className="text-sm text-red-500">Failed to load vote. Please try again.</p>
-        )}
+        {isLoading && <p className={feedback.loadingText}>Loading vote…</p>}
+        {isError   && <p className={feedback.errorText}>Failed to load vote. Please try again.</p>}
         {!isLoading && !isError && data && (
           <VoteDetail
             vote={data.vote}

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { useBillDetail, useBillText } from '@/lib/hooks/useBills';
 import BillDetail from '@/components/bills/BillDetail';
+import { pageShell, pageHeaderColors, textLink, feedback } from '@/lib/styles/tokens';
 
 /**
  * /bills/:congress/:type/:number — detailed view for a single bill.
@@ -16,21 +17,16 @@ export default function BillDetailPage() {
     useBillText(congressNum, type!, number!);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="shrink-0 border-b border-gray-200 bg-white px-6 py-4">
-        <Link to="/bills" className="text-sm text-blue-600 hover:underline">
+    <div className={pageShell}>
+      <header className={`shrink-0 ${pageHeaderColors} px-6 py-4`}>
+        <Link to="/bills" className={`text-sm ${textLink} hover:underline`}>
           ← Bills
         </Link>
       </header>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
-        {isLoading && (
-          <p className="text-sm text-gray-400">Loading bill…</p>
-        )}
-
-        {isError && (
-          <p className="text-sm text-red-500">Failed to load bill. Please try again.</p>
-        )}
+        {isLoading && <p className={feedback.loadingText}>Loading bill…</p>}
+        {isError   && <p className={feedback.errorText}>Failed to load bill. Please try again.</p>}
 
         {!isLoading && !isError && (
           <BillDetail

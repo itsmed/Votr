@@ -1,7 +1,17 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@/lib/context/UserContext';
+import {
+  pageShell,
+  pageHeaderColors,
+  card,
+  btn,
+  inputBase,
+  textPrimary,
+  textMuted,
+  textLink,
+  feedback,
+} from '@/lib/styles/tokens';
 
 export default function PreferencesPage() {
   const { user, isLoading, updateUser } = useUser();
@@ -16,21 +26,19 @@ export default function PreferencesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-sm text-gray-500">Loading…</p>
+      <div className={`flex min-h-screen items-center justify-center ${pageShell}`}>
+        <p className={feedback.loadingText}>Loading…</p>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-sm text-gray-500">
+      <div className={`flex min-h-screen items-center justify-center ${pageShell}`}>
+        <p className={`text-sm ${textMuted}`}>
           Please{' '}
-          <Link to="/login" className="text-blue-600 hover:underline">
-            log in
-          </Link>{' '}
-          to view preferences.
+          <Link to="/login" className={`${textLink} hover:underline`}>log in</Link>
+          {' '}to view preferences.
         </p>
       </div>
     );
@@ -52,15 +60,15 @@ export default function PreferencesPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="shrink-0 border-b border-gray-200 bg-white px-6 py-4">
-        <h1 className="text-xl font-semibold text-gray-900">Preferences</h1>
+    <div className={pageShell}>
+      <header className={`shrink-0 ${pageHeaderColors} px-6 py-4`}>
+        <h1 className={`text-xl font-semibold ${textPrimary}`}>Preferences</h1>
       </header>
 
       <main className="mx-auto w-full max-w-2xl px-4 py-10">
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
-          <h2 className="text-sm font-semibold text-gray-900">Your Address</h2>
-          <p className="mt-1 text-sm text-gray-500">
+        <section className={`rounded-xl ${card} p-6`}>
+          <h2 className={`text-sm font-semibold ${textPrimary}`}>Your Address</h2>
+          <p className={`mt-1 text-sm ${textMuted}`}>
             Used to look up your congressional representatives.
           </p>
 
@@ -70,19 +78,19 @@ export default function PreferencesPage() {
               value={address}
               onChange={(e) => { setAddress(e.target.value); setSaved(false); }}
               placeholder="123 Main St, Springfield, IL 62701"
-              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className={`${inputBase} px-4 py-2.5 text-sm`}
               disabled={saving}
             />
             <div className="flex items-center gap-3">
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className={`${btn.primary} px-4 py-2.5 text-sm`}
               >
                 {saving ? 'Saving…' : 'Save'}
               </button>
-              {saved && <p className="text-sm text-green-600">Saved!</p>}
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {saved  && <p className={feedback.successText}>Saved!</p>}
+              {error  && <p className={feedback.errorText}>{error}</p>}
             </div>
           </form>
         </section>

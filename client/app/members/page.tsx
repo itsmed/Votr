@@ -1,7 +1,16 @@
-
 import { useState } from 'react';
 import { useMembers } from '@/lib/hooks/useMembers';
 import MemberList from '@/components/members/MemberList';
+import {
+  pageShellFixed,
+  pageHeaderColors,
+  borderBase,
+  surface,
+  textPrimary,
+  textMuted,
+  textLink,
+  feedback,
+} from '@/lib/styles/tokens';
 
 type Chamber = 'senate' | 'house';
 
@@ -15,19 +24,19 @@ export default function MembersPage() {
   const { senators, representatives, isLoading, isError } = useMembers();
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50">
+    <div className={pageShellFixed}>
       {/* Header */}
-      <header className="shrink-0 border-b border-gray-200 bg-white px-6 py-4">
-        <h1 className="text-xl font-semibold text-gray-900">Members of Congress</h1>
+      <header className={`shrink-0 ${pageHeaderColors} px-6 py-4`}>
+        <h1 className={`text-xl font-semibold ${textPrimary}`}>Members of Congress</h1>
         {!isLoading && !isError && (
-          <p className="mt-0.5 text-sm text-gray-500">
+          <p className={`mt-0.5 text-sm ${textMuted}`}>
             {senators.length} senators · {representatives.length} representatives
           </p>
         )}
       </header>
 
       {/* Mobile chamber tabs */}
-      <div className="shrink-0 border-b border-gray-200 bg-white md:hidden">
+      <div className={`shrink-0 border-b ${borderBase} ${surface} md:hidden`}>
         <div className="flex">
           {(['senate', 'house'] as Chamber[]).map((chamber) => (
             <button
@@ -35,8 +44,8 @@ export default function MembersPage() {
               onClick={() => setActiveChamber(chamber)}
               className={`flex-1 py-3 text-sm font-medium transition-colors ${
                 activeChamber === chamber
-                  ? 'border-b-2 border-blue-600 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? `border-b-2 border-blue-600 ${textLink}`
+                  : `${textMuted} hover:text-gray-700 dark:hover:text-gray-300`
               }`}
             >
               {chamber === 'senate' ? 'Senate' : 'House of Representatives'}
@@ -48,26 +57,26 @@ export default function MembersPage() {
       {/* Content */}
       {isLoading && (
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-gray-400">Loading members…</p>
+          <p className={feedback.loadingText}>Loading members…</p>
         </div>
       )}
 
       {isError && (
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-red-500">Failed to load members. Please try again.</p>
+          <p className={feedback.errorText}>Failed to load members. Please try again.</p>
         </div>
       )}
 
       {!isLoading && !isError && (
-        <div className="min-h-0 flex-1 md:grid md:grid-cols-2 md:divide-x md:divide-gray-200">
+        <div className={`min-h-0 flex-1 md:grid md:grid-cols-2 md:divide-x md:divide-gray-200 dark:md:divide-gray-700`}>
           {/* Senators — hidden on mobile when House tab is active */}
           <section
             className={`flex flex-col overflow-hidden ${
               activeChamber === 'house' ? 'hidden md:flex' : 'flex'
             }`}
           >
-            <div className="hidden shrink-0 border-b border-gray-200 bg-white px-4 py-3 md:block">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+            <div className={`hidden shrink-0 border-b ${borderBase} ${surface} px-4 py-3 md:block`}>
+              <h2 className={`text-sm font-semibold uppercase tracking-wide ${textMuted}`}>
                 Senate
               </h2>
             </div>
@@ -82,8 +91,8 @@ export default function MembersPage() {
               activeChamber === 'senate' ? 'hidden md:flex' : 'flex'
             }`}
           >
-            <div className="hidden shrink-0 border-b border-gray-200 bg-white px-4 py-3 md:block">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+            <div className={`hidden shrink-0 border-b ${borderBase} ${surface} px-4 py-3 md:block`}>
+              <h2 className={`text-sm font-semibold uppercase tracking-wide ${textMuted}`}>
                 House of Representatives
               </h2>
             </div>

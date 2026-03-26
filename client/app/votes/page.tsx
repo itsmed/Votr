@@ -1,7 +1,16 @@
-
 import { useState } from 'react';
 import { useVotes } from '@/lib/hooks/useVotes';
 import VoteList from '@/components/votes/VoteList';
+import {
+  pageShellFixed,
+  pageHeaderColors,
+  borderBase,
+  surface,
+  textPrimary,
+  textMuted,
+  textLink,
+  feedback,
+} from '@/lib/styles/tokens';
 
 type ChamberFilter = 'all' | 'h' | 's';
 
@@ -18,18 +27,18 @@ export default function VotesPage() {
   const { data, isLoading, isError } = useVotes({ limit: 50, chamber });
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50">
-      <header className="shrink-0 border-b border-gray-200 bg-white px-6 py-4">
-        <h1 className="text-xl font-semibold text-gray-900">Congressional Votes</h1>
+    <div className={pageShellFixed}>
+      <header className={`shrink-0 ${pageHeaderColors} px-6 py-4`}>
+        <h1 className={`text-xl font-semibold ${textPrimary}`}>Congressional Votes</h1>
         {data && (
-          <p className="mt-0.5 text-sm text-gray-500">
+          <p className={`mt-0.5 text-sm ${textMuted}`}>
             {data.total.toLocaleString()} votes
           </p>
         )}
       </header>
 
       {/* Chamber tabs */}
-      <div className="shrink-0 border-b border-gray-200 bg-white">
+      <div className={`shrink-0 border-b ${borderBase} ${surface}`}>
         <div className="flex px-4">
           {TABS.map(({ value, label }) => (
             <button
@@ -37,8 +46,8 @@ export default function VotesPage() {
               onClick={() => setChamberFilter(value)}
               className={`px-4 py-3 text-sm font-medium transition-colors ${
                 chamberFilter === value
-                  ? 'border-b-2 border-blue-600 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? `border-b-2 border-blue-600 ${textLink}`
+                  : `${textMuted} hover:text-gray-700 dark:hover:text-gray-300`
               }`}
             >
               {label}
@@ -49,10 +58,10 @@ export default function VotesPage() {
 
       <main className="min-h-0 flex-1 overflow-y-auto">
         {isLoading && (
-          <p className="px-4 py-8 text-center text-sm text-gray-400">Loading votes…</p>
+          <p className={`px-4 py-8 text-center ${feedback.loadingText}`}>Loading votes…</p>
         )}
         {isError && (
-          <p className="px-4 py-8 text-center text-sm text-red-500">
+          <p className={`px-4 py-8 text-center ${feedback.errorText}`}>
             Failed to load votes. Please try again.
           </p>
         )}
