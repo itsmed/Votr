@@ -1,5 +1,6 @@
 import { type VoteRow } from '@/lib/api/congressionalVotes';
 import VotePreview from './VotePreview';
+import { feedback } from '@/lib/styles/tokens';
 
 interface VoteListProps {
   votes: VoteRow[];
@@ -8,7 +9,7 @@ interface VoteListProps {
 
 export default function VoteList({ votes, emptyMessage = 'No votes found.' }: VoteListProps) {
   if (votes.length === 0) {
-    return <p className="px-4 py-8 text-center text-sm text-gray-400">{emptyMessage}</p>;
+    return <p className={`px-4 py-8 text-center ${feedback.loadingText}`}>{emptyMessage}</p>;
   }
 
   return (
