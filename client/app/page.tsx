@@ -4,6 +4,17 @@ import { useQueryClient } from '@tanstack/react-query';
 import { findRepresentatives, type FindRepsResponse, type Legislator } from '@/lib/api/representatives';
 import MemberCard from '@/components/members/MemberCard';
 import { useUser } from '@/lib/context/UserContext';
+import {
+  pageShell,
+  btn,
+  inputBase,
+  textPrimary,
+  textMuted,
+  textFaint,
+  textLink,
+  feedback,
+  borderBase,
+} from '@/lib/styles/tokens';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
 
@@ -40,7 +51,7 @@ function RepsResults({ result }: { result: FindRepsResponse }) {
       <div className="flex flex-col gap-6">
         {senators.length > 0 && (
           <section>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            <h2 className={`mb-3 text-xs font-semibold uppercase tracking-wider ${textFaint}`}>
               Senators
             </h2>
             <ul className="flex flex-col gap-2">
@@ -54,7 +65,7 @@ function RepsResults({ result }: { result: FindRepsResponse }) {
         )}
         {representatives.length > 0 && (
           <section>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            <h2 className={`mb-3 text-xs font-semibold uppercase tracking-wider ${textFaint}`}>
               Representative
             </h2>
             <ul className="flex flex-col gap-2">
@@ -68,24 +79,24 @@ function RepsResults({ result }: { result: FindRepsResponse }) {
         )}
       </div>
 
-      <div className="rounded-xl border border-blue-100 bg-blue-50 px-6 py-5">
-        <p className="text-sm font-medium text-blue-900">
+      <div className={`rounded-xl border border-blue-100 dark:border-blue-900 bg-blue-50 dark:bg-blue-950 px-6 py-5`}>
+        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
           Want to vote on bills and see how your views compare to your representatives'?
         </p>
-        <p className="mt-1 text-sm text-blue-700">
+        <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
           Sign up to track your voting history and hold your reps accountable.
         </p>
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <a
             href={`${API_URL}/api/auth/google`}
-            className="flex items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+            className={`flex items-center justify-center gap-2 ${btn.secondary} px-4 py-2.5 text-sm`}
           >
             <GoogleIcon />
             Continue with Google
           </a>
           <a
             href={`${API_URL}/api/auth/apple`}
-            className="flex items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+            className="flex items-center justify-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-zinc-900 transition-colors hover:bg-zinc-800 dark:hover:bg-zinc-100"
           >
             <AppleIcon />
             Continue with Apple
@@ -126,13 +137,13 @@ export default function Home() {
   if (user) return <Navigate to="/profile" replace />;
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50">
+    <div className={pageShell}>
       <main className="mx-auto flex w-full max-w-2xl flex-col gap-10 px-6 py-20">
         <div className="flex flex-col gap-3">
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
+          <h1 className={`text-3xl font-semibold tracking-tight ${textPrimary}`}>
             Know Your Congress
           </h1>
-          <p className="text-base leading-7 text-zinc-500">
+          <p className={`text-base leading-7 ${textMuted}`}>
             Enter your address to find your senators and representative. Sign up to vote on bills
             and compare your opinions with theirs.
           </p>
@@ -145,22 +156,18 @@ export default function Home() {
             onChange={(e) => setAddress(e.target.value)}
             placeholder="123 Main St, Springfield, IL 62701"
             disabled={isLoading}
-            className="flex-1 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
+            className={`flex-1 ${inputBase} px-4 py-2.5 text-sm disabled:opacity-50`}
           />
           <button
             type="submit"
             disabled={isLoading || !address.trim()}
-            className="shrink-0 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className={`shrink-0 ${btn.primary} px-5 py-2.5 text-sm`}
           >
             {isLoading ? 'Searching…' : 'Find My Representatives'}
           </button>
         </form>
 
-        {error && (
-          <p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
-            {error}
-          </p>
-        )}
+        {error && <p className={feedback.error}>{error}</p>}
 
         {result && <RepsResults result={result} />}
       </main>
