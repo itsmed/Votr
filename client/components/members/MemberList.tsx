@@ -1,5 +1,6 @@
 import { type Member } from '@/lib/api/members';
 import MemberCard from './MemberCard';
+import { textFaint, feedback } from '@/lib/styles/tokens';
 
 interface MemberListProps {
   members: Member[];
@@ -33,7 +34,7 @@ export default function MemberList({
   emptyMessage = 'No members found.',
 }: MemberListProps) {
   if (members.length === 0) {
-    return <p className="px-4 py-8 text-center text-sm text-gray-400">{emptyMessage}</p>;
+    return <p className={`px-4 py-8 text-center ${feedback.loadingText}`}>{emptyMessage}</p>;
   }
 
   const groups = groupByState(members);
@@ -42,7 +43,7 @@ export default function MemberList({
     <div className="flex flex-col p-4 gap-6">
       {groups.map(({ state, members: stateMembers }) => (
         <section key={state}>
-          <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-gray-400">
+          <h3 className={`mb-2 px-1 text-xs font-semibold uppercase tracking-wider ${textFaint}`}>
             {state}
           </h3>
           <ul className="flex flex-col gap-2">
