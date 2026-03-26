@@ -63,8 +63,11 @@ export const cardElevated = `rounded-lg border ${borderBase} ${surface} shadow-s
 
 // ── Page layout helpers ───────────────────────────────────────────────────────
 
-/** Root shell of a full-height route page */
+/** Root shell of a full-height route page (detail pages that grow to content) */
 export const pageShell = `flex min-h-screen flex-col ${pageBg}`;
+
+/** Root shell of a fixed-height list page (fills viewport, children scroll) */
+export const pageShellFixed = `flex h-screen flex-col ${pageBg}`;
 
 /**
  * Colors for a sticky page/section header bar.

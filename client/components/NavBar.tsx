@@ -3,14 +3,17 @@ import { useUser } from '@/lib/context/UserContext';
 import { useTheme, type Theme } from '@/lib/context/ThemeContext';
 import { useMyReps } from '@/lib/hooks/useMyReps';
 import { useQueryClient } from '@tanstack/react-query';
+import { navLink, btn, borderBase, surface, textPrimary, textMuted } from '@/lib/styles/tokens';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
 
 const NAV_LINKS = [
-  { href: '/bills', label: 'Bills' },
+  { href: '/bills',   label: 'Bills' },
   { href: '/members', label: 'Members' },
-  { href: '/votes', label: 'Votes' },
+  { href: '/votes',   label: 'Votes' },
 ];
+
+// ── Theme toggle ──────────────────────────────────────────────────────────────
 
 const THEME_CYCLE: Theme[] = ['light', 'dark', 'system'];
 const THEME_LABELS: Record<Theme, string> = { light: 'Light', dark: 'Dark', system: 'System' };
@@ -49,15 +52,17 @@ function ThemeToggle() {
     <button
       onClick={() => setTheme(next)}
       title={`Theme: ${THEME_LABELS[theme]} (click for ${THEME_LABELS[next]})`}
-      className="flex items-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+      className={`flex items-center gap-1.5 px-2 py-2 text-xs ${btn.ghost}`}
     >
-      {theme === 'light' && <SunIcon />}
-      {theme === 'dark' && <MoonIcon />}
+      {theme === 'light'  && <SunIcon />}
+      {theme === 'dark'   && <MoonIcon />}
       {theme === 'system' && <MonitorIcon />}
       <span className="hidden sm:inline">{THEME_LABELS[theme]}</span>
     </button>
   );
 }
+
+// ── Gear icon ─────────────────────────────────────────────────────────────────
 
 function GearIcon() {
   return (
@@ -78,6 +83,8 @@ function GearIcon() {
     </svg>
   );
 }
+
+// ── Nav bar ───────────────────────────────────────────────────────────────────
 
 export default function NavBar() {
   const { pathname } = useLocation();
@@ -102,9 +109,9 @@ export default function NavBar() {
   const allReps = reps ? [...reps.senators, ...reps.representatives] : [];
 
   return (
-    <nav className="shrink-0 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+    <nav className={`shrink-0 border-b ${borderBase} ${surface}`}>
       <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 sm:px-6">
-        <Link to="/" className="py-4 text-sm font-semibold text-gray-900 hover:text-blue-600 dark:text-gray-100">
+        <Link to="/" className={`py-4 text-sm font-semibold ${textPrimary} hover:text-blue-600 dark:hover:text-blue-400`}>
           Polis
         </Link>
 
@@ -112,15 +119,7 @@ export default function NavBar() {
           {NAV_LINKS.map(({ href, label }) => {
             const isActive = pathname === href || pathname.startsWith(`${href}/`);
             return (
-              <Link
-                key={href}
-                to={href}
-                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
+              <Link key={href} to={href} className={isActive ? navLink.active : navLink.inactive}>
                 {label}
               </Link>
             );
@@ -131,15 +130,7 @@ export default function NavBar() {
               const href = `/members/${rep.api_id}`;
               const isActive = pathname === href;
               return (
-                <Link
-                  key={rep.api_id}
-                  to={href}
-                  className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                >
+                <Link key={rep.api_id} to={href} className={isActive ? navLink.active : navLink.inactive}>
                   {rep.role + ' ' + (rep.name.includes(',') ? rep.name.split(', ').reverse().join(' ') : rep.name)}
                 </Link>
               );
@@ -149,6 +140,7 @@ export default function NavBar() {
 
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
+
           {!isLoading && user && (
             <>
               <Link
@@ -156,19 +148,15 @@ export default function NavBar() {
                 title="Preferences"
                 className={`rounded-md p-2 transition-colors ${
                   pathname === '/preferences'
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
+                    : `${textMuted} hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100`
                 }`}
               >
                 <GearIcon />
               </Link>
               <Link
                 to="/profile"
-                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  pathname === '/profile'
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                className={pathname === '/profile' ? navLink.active : navLink.inactive}
               >
                 {user.name}
               </Link>
@@ -177,7 +165,7 @@ export default function NavBar() {
           {!isLoading && (
             <button
               onClick={user ? handleLogout : () => navigate('/login')}
-              className="rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+              className={`px-3 py-2 text-sm ${btn.ghost}`}
             >
               {user ? 'Log out' : 'Log in'}
             </button>
