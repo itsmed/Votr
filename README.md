@@ -4,15 +4,15 @@ A civic engagement app that lets users find their congressional representatives,
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Vite 6, React 19, React Router 7, TypeScript |
-| Styling | Tailwind CSS v4, shadcn/ui |
-| Data Fetching | React Query |
-| Backend | Express.js (Node.js) |
-| Database | PostgreSQL 16 (Docker in dev, Supabase in prod) |
-| Package Manager | pnpm |
-| Testing | Jest + React Testing Library |
+| Layer           | Technology                                      |
+| --------------- | ----------------------------------------------- |
+| Frontend        | Vite 6, React 19, React Router 7, TypeScript    |
+| Styling         | Tailwind CSS v4, shadcn/ui                      |
+| Data Fetching   | React Query                                     |
+| Backend         | Express.js (Node.js)                            |
+| Database        | PostgreSQL 16 (Docker in dev, Supabase in prod) |
+| Package Manager | pnpm                                            |
+| Testing         | Jest + React Testing Library                    |
 
 ## Project Structure
 
@@ -53,6 +53,7 @@ pnpm dev
 ```
 
 This single command:
+
 1. Starts a PostgreSQL 16 container in Docker (port 5432) and waits for it to be healthy
 2. Starts the Express server with nodemon hot-reload (port 4000)
 3. Starts the Vite dev server with HMR (port 3000)
@@ -61,18 +62,18 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Dev Commands
 
-| Command | Description |
-|---|---|
-| `pnpm dev` | Start Postgres in Docker + server + client natively |
-| `pnpm dev:docker` | Run everything (db, server, client) fully in Docker |
-| `pnpm dev:down` | Stop all Docker services |
-| `pnpm db:up` | Start only the Postgres container |
-| `pnpm db:down` | Stop only the Postgres container |
-| `pnpm db:migrate` | Apply all pending SQL migrations |
-| `pnpm db:migrate:dry-run` | Print pending migrations without applying them |
-| `pnpm db:reset` | Destroy the database volume and recreate it (wipes all data) |
-| `pnpm build` | Build the client for production |
-| `pnpm lint` | Lint the client |
+| Command                   | Description                                                  |
+| ------------------------- | ------------------------------------------------------------ |
+| `pnpm dev`                | Start Postgres in Docker + server + client natively          |
+| `pnpm dev:docker`         | Run everything (db, server, client) fully in Docker          |
+| `pnpm dev:down`           | Stop all Docker services                                     |
+| `pnpm db:up`              | Start only the Postgres container                            |
+| `pnpm db:down`            | Stop only the Postgres container                             |
+| `pnpm db:migrate`         | Apply all pending SQL migrations                             |
+| `pnpm db:migrate:dry-run` | Print pending migrations without applying them               |
+| `pnpm db:reset`           | Destroy the database volume and recreate it (wipes all data) |
+| `pnpm build`              | Build the client for production                              |
+| `pnpm lint`               | Lint the client                                              |
 
 ## Environment Variables
 
@@ -80,28 +81,38 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 These are passed to Docker Compose for the Postgres container.
 
-| Variable | Default | Description |
-|---|---|---|
-| `POSTGRES_USER` | `pollus` | Database user |
+| Variable            | Default      | Description       |
+| ------------------- | ------------ | ----------------- |
+| `POSTGRES_USER`     | `pollus`     | Database user     |
 | `POSTGRES_PASSWORD` | `pollus_dev` | Database password |
-| `POSTGRES_DB` | `pollus_dev` | Database name |
+| `POSTGRES_DB`       | `pollus_dev` | Database name     |
 
 ### Server — `server/.env.development`
 
 Loaded automatically when running `pnpm dev`.
 
-| Variable | Default | Description |
-|---|---|---|
-| `NODE_ENV` | `development` | Runtime environment |
-| `PORT` | `4000` | Port the Express server listens on |
-| `DATABASE_URL` | `postgresql://pollus:pollus_dev@localhost:5432/pollus_dev` | Postgres connection string |
+| Variable               | Default                                                    | Description                        |
+| ---------------------- | ---------------------------------------------------------- | ---------------------------------- |
+| `NODE_ENV`             | `development`                                              | Runtime environment                |
+| `PORT`                 | `4000`                                                     | Port the Express server listens on |
+| `DATABASE_URL`         | `postgresql://pollus:pollus_dev@localhost:5432/pollus_dev` | Postgres connection string         |
+| `CONGRESS_API_KEY`     | `your_api_key_here`                                        | API key for the Congress API       |
+| `GEOCOD_API_KEY`       | `your_api_key_here`                                        | API key for the Geocoding API      |
+| `GOOGLE_CLIENT_ID`     | `REPLACE_ME`                                               | Google OAuth client ID             |
+| `GOOGLE_CLIENT_SECRET` | `REPLACE_ME`                                               | Google OAuth client secret         |
+| `APPLE_CLIENT_ID`      | `REPLACE_ME`                                               | Apple OAuth client ID              |
+| `APPLE_TEAM_ID`        | `REPLACE_ME`                                               | Apple OAuth team ID                |
+| `APPLE_KEY_ID`         | `REPLACE_ME`                                               | Apple OAuth key ID                 |
+| `APPLE_PRIVATE_KEY`    | `REPLACE_ME`                                               | Apple OAuth private key            |
+| `API_URL`              | `e.g. http://localhost:4000`                               | used to build the callback URLs    |
+| `CLIENT_URL`           | `e.g. http://localhost:3000`                               | where to redirect after auth       |
 
 ### Client — `client/.env.development`
 
 Loaded automatically by Vite in development.
 
-| Variable | Value | Description |
-|---|---|---|
+| Variable       | Value                   | Description                                      |
+| -------------- | ----------------------- | ------------------------------------------------ |
 | `VITE_API_URL` | `http://localhost:4000` | Base URL for all API calls to the Express server |
 
 ## Database
@@ -131,11 +142,13 @@ pnpm db:migrate:dry-run
 ```
 
 **How it works:**
+
 - `docker/postgres/init/01_init.sql` bootstraps a _fresh_ container (creates schema + marks `001` as applied)
 - `scripts/migrate.sh` applies any migrations not yet recorded in `schema_migrations`
 - Each migration runs inside a transaction — if it fails, all changes for that file are rolled back and the version is not recorded
 
 **Adding a new migration:**
+
 1. Create `docker/postgres/migrations/NNN_description.sql` (increment the number)
 2. Run `pnpm db:migrate`
 
