@@ -1,16 +1,6 @@
 import { useState } from 'react';
-import { useVotes } from '@/lib/hooks/useVotes';
+import { useVotes, pageShellFixed, pageHeaderColors, borderBase, surface, textPrimary, textMuted, textLink, feedback } from '@pollus/shared';
 import VoteList from '@/components/votes/VoteList';
-import {
-  pageShellFixed,
-  pageHeaderColors,
-  borderBase,
-  surface,
-  textPrimary,
-  textMuted,
-  textLink,
-  feedback,
-} from '@/lib/styles/tokens';
 
 type ChamberFilter = 'all' | 'h' | 's';
 

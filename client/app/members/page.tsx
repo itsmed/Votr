@@ -1,16 +1,6 @@
 import { useState } from 'react';
-import { useMembers } from '@/lib/hooks/useMembers';
+import { useMembers, pageShellFixed, pageHeaderColors, borderBase, surface, textPrimary, textMuted, textLink, feedback } from '@pollus/shared';
 import MemberList from '@/components/members/MemberList';
-import {
-  pageShellFixed,
-  pageHeaderColors,
-  borderBase,
-  surface,
-  textPrimary,
-  textMuted,
-  textLink,
-  feedback,
-} from '@/lib/styles/tokens';
 
 type Chamber = 'senate' | 'house';
 

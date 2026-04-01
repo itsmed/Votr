@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom';
-import { pageBg, card, btn, textPrimary, textMuted, textLink, borderBase } from '@/lib/styles/tokens';
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
+import { pageBg, btn, textPrimary, textMuted, borderBase, getApiUrl } from '@pollus/shared';
 
 function GoogleIcon() {
   return (
@@ -37,7 +35,7 @@ export default function LoginPage() {
 
         <div className="flex flex-col gap-3">
           <a
-            href={`${API_URL}/api/auth/google`}
+            href={`${getApiUrl()}/api/auth/google`}
             className={`flex items-center justify-center gap-3 ${btn.secondary} px-4 py-2.5 text-sm`}
           >
             <GoogleIcon />
@@ -45,7 +43,7 @@ export default function LoginPage() {
           </a>
 
           <a
-            href={`${API_URL}/api/auth/apple`}
+            href={`${getApiUrl()}/api/auth/apple`}
             className="flex items-center justify-center gap-3 rounded-lg bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-zinc-900 transition-colors hover:bg-zinc-800 dark:hover:bg-zinc-100"
           >
             <AppleIcon />

@@ -1,10 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
-import { useVoteDetail, useUserCongressionalVote } from '@/lib/hooks/useVotes';
+import { useVoteDetail, useUserCongressionalVote, useMyReps, pageShell, pageHeaderColors, btn, textLink, feedback } from '@pollus/shared';
 import { useUser } from '@/lib/context/UserContext';
-import { useMyReps } from '@/lib/hooks/useMyReps';
 import VoteDetail from '@/components/votes/VoteDetail';
-import { pageShell, pageHeaderColors, btn, textLink, feedback } from '@/lib/styles/tokens';
 
 function ChevronLeftIcon() {
   return (

@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
-import { useMemberDetail, useMemberAgreement } from '@/lib/hooks/useMembers';
+import { useMemberDetail, useMemberAgreement, pageShell, pageHeaderColors, textLink, feedback } from '@pollus/shared';
 import { useUser } from '@/lib/context/UserContext';
 import MemberDetail from '@/components/members/MemberDetail';
-import { pageShell, pageHeaderColors, textLink, feedback } from '@/lib/styles/tokens';
 
 export default function MemberDetailPage() {
   const { bioguideId } = useParams<{ bioguideId: string }>();
