@@ -86,14 +86,14 @@ function RepsResults({ result }: { result: FindRepsResponse }) {
         </p>
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <a
-            href={`${API_URL}/api/auth/google`}
+            href={`${getApiUrl()}/api/auth/google`}
             className={`flex items-center justify-center gap-2 ${btn.secondary} px-4 py-2.5 text-sm`}
           >
             <GoogleIcon />
             Continue with Google
           </a>
           <a
-            href={`${API_URL}/api/auth/apple`}
+            href={`${getApiUrl()}/api/auth/apple`}
             className="flex items-center justify-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-zinc-900 transition-colors hover:bg-zinc-800 dark:hover:bg-zinc-100"
           >
             <AppleIcon />

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@/lib/context/UserContext';
-import { findRepresentatives, type Legislator } from '@/lib/api/representatives';
+import { findRepresentatives, type RepLegislator } from '@pollus/shared';
 import MemberCard from '@/components/members/MemberCard';
 import {
   pageShell,
@@ -15,13 +15,13 @@ import {
   textFaint,
   textLink,
   feedback,
-} from '@/lib/styles/tokens';
+} from '@pollus/shared';
 
-function toLegislatorMember(leg: Legislator, index: number) {
+function toLegislatorMember(leg: RepLegislator, index: number) {
   return { id: index, ...leg };
 }
 
-function LegislatorSection({ title, legislators }: { title: string; legislators: Legislator[] }) {
+function LegislatorSection({ title, legislators }: { title: string; legislators: RepLegislator[] }) {
   if (legislators.length === 0) return null;
   return (
     <section>
@@ -39,7 +39,7 @@ function LegislatorSection({ title, legislators }: { title: string; legislators:
 
 export default function ProfilePage() {
   const { user, isLoading, updateUser } = useUser();
-  const [legislators, setLegislators] = useState<Legislator[]>([]);
+  const [legislators, setLegislators] = useState<RepLegislator[]>([]);
   const [repsLoading, setRepsLoading] = useState(false);
   const [repsError, setRepsError] = useState<string | null>(null);
 
