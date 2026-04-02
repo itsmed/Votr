@@ -11,7 +11,7 @@ const queryClient = new QueryClient();
  * Root layout — sets up the QueryClient and configures the shared API base URL.
  * All screens are rendered inside a full-screen Stack navigator.
  */
-export default function RootLayout(): JSX.Element {
+export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <Stack screenOptions={{ headerShown: false }} />

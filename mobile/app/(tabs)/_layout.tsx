@@ -12,6 +12,7 @@ interface TabConfig {
 
 const TABS: TabConfig[] = [
   { name: 'index', title: 'Bills', icon: 'document-text-outline', activeIcon: 'document-text' },
+  { name: 'votes', title: 'Votes', icon: 'checkbox-outline', activeIcon: 'checkbox' },
   { name: 'reps', title: 'Reps', icon: 'people-outline', activeIcon: 'people' },
   { name: 'profile', title: 'Profile', icon: 'person-outline', activeIcon: 'person' },
 ];
@@ -19,7 +20,7 @@ const TABS: TabConfig[] = [
 /**
  * Tab navigator with three primary sections: Bills, Reps, and Profile.
  */
-export default function TabLayout(): JSX.Element {
+export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-function ProfileContent({ user }: { user: User }): JSX.Element {
+function ProfileContent({ user }: { user: User }) {
   return (
     <ScrollView contentContainerStyle={styles.scroll}>
       <View style={styles.header}>
@@ -35,7 +35,7 @@ function ProfileContent({ user }: { user: User }): JSX.Element {
  * Profile tab — shows the authenticated user's name, email, and account details.
  * Falls back to a sign-in prompt when unauthenticated.
  */
-export default function ProfileScreen(): JSX.Element {
+export default function ProfileScreen() {
   const { data: user, isLoading, error } = useQuery<User>({
     queryKey: ['currentUser'],
     queryFn: fetchCurrentUser,

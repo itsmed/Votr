@@ -1,4 +1,4 @@
-import { useBills, type Bill } from '@votr/shared';
+import { useVotes, type VoteRow } from '@votr/shared';
 import { useRouter } from 'expo-router';
 import {
   ActivityIndicator,
@@ -10,36 +10,36 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-function BillCard({ bill, onPress }: { bill: Bill; onPress: () => void }) {
+const CHAMBER_LABEL: Record<string, string> = { h: 'House', s: 'Senate' };
+const CHAMBER_COLOR: Record<string, string> = { h: '#2563eb', s: '#7c3aed' };
+const CHAMBER_BG: Record<string, string> = { h: '#eff6ff', s: '#f5f3ff' };
+
+function VoteCard({ vote, onPress }: { vote: VoteRow; onPress: () => void }) {
+  const chamberColor = CHAMBER_COLOR[vote.chamber] ?? '#374151';
+  const chamberBg = CHAMBER_BG[vote.chamber] ?? '#f3f4f6';
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.cardRow}>
-        <Text style={styles.badge}>
-          {bill.bill_type?.toUpperCase()} {bill.bill_number}
+        <Text style={[styles.badge, { color: chamberColor, backgroundColor: chamberBg }]}>
+          {CHAMBER_LABEL[vote.chamber] ?? vote.chamber.toUpperCase()}
         </Text>
-        {bill.latest_action_date && (
-          <Text style={styles.date}>{bill.latest_action_date}</Text>
-        )}
+        <Text style={styles.date}>{new Date(vote.date).toLocaleDateString()}</Text>
       </View>
-      <Text style={styles.title} numberOfLines={2}>
-        {bill.title}
-      </Text>
-      {bill.latest_action_text && (
-        <Text style={styles.action} numberOfLines={1}>
-          {bill.latest_action_text}
-        </Text>
+      <Text style={styles.question} numberOfLines={2}>{vote.question}</Text>
+      {vote.result && (
+        <Text style={styles.result} numberOfLines={1}>{vote.result}</Text>
       )}
     </TouchableOpacity>
   );
 }
 
 /**
- * Bills tab — lists all bills from the Congress.gov API via the shared hook.
- * Tapping a bill navigates to its detail screen.
+ * Votes tab — lists congressional votes, tapping navigates to the detail/voting screen.
  */
-export default function BillsScreen() {
+export default function VotesScreen() {
   const router = useRouter();
-  const { bills, isLoading, isError } = useBills();
+  const { data, isLoading, isError } = useVotes({ limit: 50 });
 
   if (isLoading) {
     return (
@@ -52,7 +52,7 @@ export default function BillsScreen() {
   if (isError) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>Failed to load bills.</Text>
+        <Text style={styles.errorText}>Failed to load votes.</Text>
       </View>
     );
   }
@@ -60,16 +60,12 @@ export default function BillsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <FlatList
-        data={bills}
-        keyExtractor={(item) => String(item.id)}
+        data={data?.votes ?? []}
+        keyExtractor={(item) => item.vote_id}
         renderItem={({ item }) => (
-          <BillCard
-            bill={item}
-            onPress={() =>
-              router.push(
-                `/bill/${item.congress_number}/${item.bill_type}/${item.bill_number}` as never
-              )
-            }
+          <VoteCard
+            vote={item}
+            onPress={() => router.push(`/vote/${encodeURIComponent(item.vote_id)}` as never)}
           />
         )}
         contentContainerStyle={styles.list}
@@ -102,14 +98,12 @@ const styles = StyleSheet.create({
   badge: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#2563eb',
-    backgroundColor: '#eff6ff',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
     overflow: 'hidden',
   },
   date: { fontSize: 12, color: '#6b7280' },
-  title: { fontSize: 15, fontWeight: '500', color: '#111827', lineHeight: 22 },
-  action: { marginTop: 6, fontSize: 13, color: '#6b7280' },
+  question: { fontSize: 15, fontWeight: '500', color: '#111827', lineHeight: 22 },
+  result: { marginTop: 6, fontSize: 13, color: '#6b7280' },
 });

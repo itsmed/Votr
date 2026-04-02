@@ -2,7 +2,7 @@ import { useMyReps, type Member } from '@votr/shared';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-function RepCard({ member }: { member: Member }): JSX.Element {
+function RepCard({ member }: { member: Member }) {
   return (
     <View style={styles.card}>
       {member.photo_url ? (
@@ -25,7 +25,7 @@ function RepCard({ member }: { member: Member }): JSX.Element {
   );
 }
 
-function Section({ title, members }: { title: string; members: Member[] }): JSX.Element | null {
+function Section({ title, members }: { title: string; members: Member[] }) {
   if (members.length === 0) return null;
   return (
     <>
@@ -41,7 +41,7 @@ function Section({ title, members }: { title: string; members: Member[] }): JSX.
  * Reps tab — shows the current user's senators and representatives.
  * Data is fetched via the shared useMyReps hook which calls /api/auth/me/reps.
  */
-export default function RepsScreen(): JSX.Element {
+export default function RepsScreen() {
   const { data, isLoading } = useMyReps(true);
 
   if (isLoading) {
