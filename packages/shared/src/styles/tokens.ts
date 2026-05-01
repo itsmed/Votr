@@ -93,7 +93,7 @@ export const badge = {
 
 /** Keyed by full party name */
 export const partyBadge: Record<string, string> = {
-  Democrat:    badge.blue,
+  Democratic:    badge.blue,
   Republican:  badge.red,
   Independent: badge.purple,
 };
