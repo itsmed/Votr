@@ -1,10 +1,8 @@
-'use strict';
-
-const express = require('express');
-const passport = require('passport');
-const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
-const AppleStrategy = require('passport-apple');
-const pool = require('../../db');
+import express, { type Request, type Response, type NextFunction } from 'express';
+import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import AppleStrategy from 'passport-apple';
+import pool from '../../db';
 
 const router = express.Router();
 
@@ -12,12 +10,7 @@ const COOKIE_NAME = 'votr_user_id';
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60 * 1000;
 const CLIENT_URL = process.env.CLIENT_URL ?? 'http://localhost:3000';
 
-/**
- * Finds an existing user by email or creates a new one.
- * @param {{ email: string, name: string }} profile
- * @returns {Promise<number>} user id
- */
-async function findOrCreateUser({ email, name }) {
+async function findOrCreateUser({ email, name }: { email: string; name: string }): Promise<number> {
   const { rows } = await pool.query(
     `INSERT INTO users (email, name)
      VALUES ($1, $2)
@@ -25,16 +18,14 @@ async function findOrCreateUser({ email, name }) {
      RETURNING id`,
     [email, name]
   );
-  return rows[0].id;
+  return rows[0].id as number;
 }
-
-// ── Google ────────────────────────────────────────────────────────────────────
 
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientID: process.env.GOOGLE_CLIENT_ID ?? '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
       callbackURL: `${process.env.API_URL ?? 'http://localhost:4000'}/api/auth/google/callback`,
     },
     async (_accessToken, _refreshToken, profile, done) => {
@@ -42,15 +33,13 @@ passport.use(
         const email = profile.emails?.[0]?.value;
         if (!email) return done(new Error('No email returned from Google'));
         const id = await findOrCreateUser({ email, name: profile.displayName });
-        done(null, id);
+        done(null, id as unknown as Express.User);
       } catch (err) {
-        done(err);
+        done(err as Error);
       }
     }
   )
 );
-
-// ── Apple ─────────────────────────────────────────────────────────────────────
 
 passport.use(
   new AppleStrategy(
@@ -72,20 +61,21 @@ passport.use(
         const id = await findOrCreateUser({ email, name });
         done(null, id);
       } catch (err) {
-        done(err);
+        done(err as Error);
       }
     }
   )
 );
 
-// Passport requires serialize/deserialize even without sessions (we use cookies directly)
 passport.serializeUser((id, done) => done(null, id));
-passport.deserializeUser((id, done) => done(null, id));
+passport.deserializeUser((id, done) => done(null, id as Express.User));
 
-// Shared callback handler: sets the user-id cookie and redirects to profile
-function oauthCallback(req, res, next) {
-  passport.authenticate(req.params.provider, { session: false }, (err, userId) => {
-    if (err || !userId) return res.redirect(`${CLIENT_URL}/?auth_error=1`);
+function oauthCallback(req: Request, res: Response, next: NextFunction, provider: string): void {
+  passport.authenticate(provider, { session: false }, (err: Error | null, userId: number | false) => {
+    if (err || !userId) {
+      res.redirect(`${CLIENT_URL}/?auth_error=1`);
+      return;
+    }
     res.cookie(COOKIE_NAME, userId, {
       httpOnly: true,
       maxAge: COOKIE_MAX_AGE,
@@ -96,79 +86,64 @@ function oauthCallback(req, res, next) {
   })(req, res, next);
 }
 
-// GET /api/auth/google — initiate Google OAuth
 router.get('/google', passport.authenticate('google', { scope: ['email', 'profile'], session: false }));
 
-// GET /api/auth/google/callback
-router.get('/google/callback', (req, res, next) => {
-  req.params.provider = 'google';
-  oauthCallback(req, res, next);
-});
+router.get('/google/callback', (req, res, next) => oauthCallback(req, res, next, 'google'));
 
-// POST /api/auth/apple — initiate Apple OAuth (Apple posts back, so both GET and POST needed)
 router.get('/apple', passport.authenticate('apple', { session: false }));
 
-// POST /api/auth/apple/callback
-router.post('/apple/callback', (req, res, next) => {
-  req.params.provider = 'apple';
-  oauthCallback(req, res, next);
-});
+router.post('/apple/callback', (req, res, next) => oauthCallback(req, res, next, 'apple'));
 
-// POST /api/auth/logout — clears the session cookie
-router.post('/logout', (req, res) => {
+router.post('/logout', (_req, res) => {
   res.clearCookie('votr_user_id');
   res.json({ ok: true });
 });
 
-// GET /api/auth/me — returns the current user
 router.get('/me', (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   res.json({ user: req.user });
 });
 
-// PATCH /api/auth/me — update address, preferences, or representative IDs
-//
-// To save the user's representatives, pass senator_api_ids and/or
-// congress_member_api_ids as arrays of bioguide ID strings. The server
-// resolves them to integer member IDs before persisting.
-router.patch('/me', async (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-  const { address, preferences, senator_api_ids, congress_member_api_ids } = req.body;
+router.patch('/me', async (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+
+  const { address, preferences, senator_api_ids, congress_member_api_ids } = req.body as {
+    address?: string;
+    preferences?: Record<string, unknown>;
+    senator_api_ids?: string[];
+    congress_member_api_ids?: string[];
+  };
+
   const hasAddress = Object.prototype.hasOwnProperty.call(req.body, 'address');
   const hasPreferences = Object.prototype.hasOwnProperty.call(req.body, 'preferences');
   const hasSenators = Array.isArray(senator_api_ids);
   const hasReps = Array.isArray(congress_member_api_ids);
 
   try {
-    // Resolve bioguide API IDs → integer member IDs when provided
-    let senatorIds = req.user.senator_ids ?? [];
-    let repIds = req.user.congress_member_ids ?? [];
+    let senatorIds: number[] = req.user.senator_ids ?? [];
+    let repIds: number[] = req.user.congress_member_ids ?? [];
 
     if (hasSenators) {
-      if (senator_api_ids.length === 0) {
+      if (senator_api_ids!.length === 0) {
         senatorIds = [];
       } else {
         const { rows } = await pool.query(
           'SELECT id FROM members WHERE api_id = ANY($1)',
           [senator_api_ids]
         );
-        senatorIds = rows.map((r) => r.id);
+        senatorIds = rows.map((r: { id: number }) => r.id);
       }
     }
 
     if (hasReps) {
-      if (congress_member_api_ids.length === 0) {
+      if (congress_member_api_ids!.length === 0) {
         repIds = [];
       } else {
         const { rows } = await pool.query(
           'SELECT id FROM members WHERE api_id = ANY($1)',
           [congress_member_api_ids]
         );
-        repIds = rows.map((r) => r.id);
+        repIds = rows.map((r: { id: number }) => r.id);
       }
     }
 
@@ -183,9 +158,7 @@ router.patch('/me', async (req, res, next) => {
       [
         hasAddress, address ?? null,
         hasPreferences, preferences ? JSON.stringify(preferences) : null,
-        senatorIds,
-        repIds,
-        req.user.id,
+        senatorIds, repIds, req.user.id,
       ]
     );
     res.json({ user: rows[0] });
@@ -194,27 +167,22 @@ router.patch('/me', async (req, res, next) => {
   }
 });
 
-// GET /api/auth/me/reps — returns member rows for the user's saved representatives
-router.get('/me/reps', async (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
+router.get('/me/reps', async (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   try {
     const senatorIds = req.user.senator_ids ?? [];
     const repIds = req.user.congress_member_ids ?? [];
     const allIds = [...senatorIds, ...repIds];
 
-    if (allIds.length === 0) {
-      return res.json({ senators: [], representatives: [] });
-    }
+    if (allIds.length === 0) return res.json({ senators: [], representatives: [] });
 
     const { rows } = await pool.query(
       'SELECT * FROM members WHERE id = ANY($1) ORDER BY name',
       [allIds]
     );
 
-    const senators = rows.filter((m) => senatorIds.includes(m.id));
-    const representatives = rows.filter((m) => repIds.includes(m.id));
+    const senators = rows.filter((m: { id: number }) => senatorIds.includes(m.id));
+    const representatives = rows.filter((m: { id: number }) => repIds.includes(m.id));
 
     res.json({ senators, representatives });
   } catch (err) {
@@ -222,11 +190,8 @@ router.get('/me/reps', async (req, res, next) => {
   }
 });
 
-// GET /api/auth/me/saved-members
-router.get('/me/saved-members', async (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
+router.get('/me/saved-members', async (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   try {
     const { rows } = await pool.query(
       `SELECT m.* FROM members m
@@ -241,11 +206,8 @@ router.get('/me/saved-members', async (req, res, next) => {
   }
 });
 
-// POST /api/auth/me/saved-members/:memberId
-router.post('/me/saved-members/:memberId', async (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
+router.post('/me/saved-members/:memberId', async (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   try {
     await pool.query(
       `INSERT INTO user_saved_members (user_id, member_id) VALUES ($1, $2)
@@ -258,11 +220,8 @@ router.post('/me/saved-members/:memberId', async (req, res, next) => {
   }
 });
 
-// DELETE /api/auth/me/saved-members/:memberId
-router.delete('/me/saved-members/:memberId', async (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
+router.delete('/me/saved-members/:memberId', async (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   try {
     await pool.query(
       'DELETE FROM user_saved_members WHERE user_id = $1 AND member_id = $2',
@@ -274,4 +233,4 @@ router.delete('/me/saved-members/:memberId', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;
