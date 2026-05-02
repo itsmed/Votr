@@ -11,6 +11,9 @@ importers:
       concurrently:
         specifier: ^9.0.0
         version: 9.2.1
+      husky:
+        specifier: ^9.0.0
+        version: 9.1.7
 
   client:
     dependencies:
@@ -216,6 +219,9 @@ importers:
       eslint-plugin-unicorn:
         specifier: ^57
         version: 57.0.0(eslint@9.39.4(jiti@2.6.1))
+      globals:
+        specifier: ^15
+        version: 15.15.0
       jest:
         specifier: ^30.3.0
         version: 30.3.0(@types/node@20.19.37)
@@ -3364,6 +3370,11 @@ packages:
   human-signals@2.1.0:
     resolution: {integrity: sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==}
     engines: {node: '>=10.17.0'}
+
+  husky@9.1.7:
+    resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   iconv-lite@0.4.23:
     resolution: {integrity: sha512-neyTUVFtahjf0mB3dZT77u+8O0QB89jFdnBkd5P1JgYPbPaia3gXXOVL2fq8VyU2gMMD7SaN7QukTB/pmXYvDA==}
@@ -9467,6 +9478,8 @@ snapshots:
       - supports-color
 
   human-signals@2.1.0: {}
+
+  husky@9.1.7: {}
 
   iconv-lite@0.4.23:
     dependencies:
