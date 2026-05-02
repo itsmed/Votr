@@ -1,4 +1,4 @@
-import { CURRENT_CONGRESS } from '../CONSTANTS';
+import { CURRENT_CONGRESS } from '../constants';
 
 const GEOCODIO_API_BASE = 'https://api.geocod.io/v1.11';
 

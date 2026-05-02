@@ -1,5 +1,5 @@
 import pool from '../db';
-import { CURRENT_CONGRESS } from '../CONSTANTS';
+import { CURRENT_CONGRESS } from '../constants';
 import type { PoolClient } from 'pg';
 
 const CONGRESS_API_BASE = 'https://api.congress.gov/v3';

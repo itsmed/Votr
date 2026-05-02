@@ -1,4 +1,4 @@
-jest.mock('../CONSTANTS', () => ({ CURRENT_CONGRESS: 119 }));
+jest.mock('../constants', () => ({ CURRENT_CONGRESS: 119 }));
 
 import { findLegislators, mapGeocodioLegislator } from '../services/geocodioService';
 

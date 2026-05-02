@@ -371,7 +371,7 @@ Returns all congressional members for the current Congress (`CURRENT_CONGRESS = 
 server/
 ├── app.js                      # Express app setup, passport init, route mounting
 ├── bin/www                     # HTTP server entry point (port 4000)
-├── CONSTANTS.ts                # Shared constants (e.g. CURRENT_CONGRESS)
+├── constants.ts                # Shared constants (e.g. CURRENT_CONGRESS)
 ├── tsconfig.json               # TypeScript config for .ts files in the server
 ├── db/
 │   ├── index.js                # pg connection pool
@@ -406,7 +406,7 @@ server/
     └── memberService.test.js
 ```
 
-### `CONSTANTS.ts`
+### `constants.ts`
 
 | Constant | Value | Description |
 |---|---|---|

@@ -1,5 +1,5 @@
 import pool from '../db';
-import { CURRENT_CONGRESS } from '../CONSTANTS';
+import { CURRENT_CONGRESS } from '../constants';
 
 const CONGRESS_API_BASE = 'https://api.congress.gov/v3';
 const BILL_LIST_LIMIT = 250;
