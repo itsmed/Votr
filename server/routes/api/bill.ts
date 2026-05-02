@@ -7,8 +7,8 @@ router.get('/', async (_req: Request, res: Response) => {
   try {
     const { bills, source } = await getBills();
     res.json({ source, count: bills.length, bills });
-  } catch (err) {
-    console.error('GET /api/bill error:', err);
+  } catch (error) {
+    console.error('GET /api/bill error:', error);
     res.status(500).json({ error: 'Failed to retrieve bills' });
   }
 });
@@ -18,8 +18,8 @@ router.get('/:congress/:type/:number', async (req: Request, res: Response) => {
   try {
     const detail = await getBillDetail(congress, type.toLowerCase(), number);
     res.json(detail);
-  } catch (err) {
-    console.error(`GET /api/bill/${congress}/${type}/${number} error:`, err);
+  } catch (error) {
+    console.error(`GET /api/bill/${congress}/${type}/${number} error:`, error);
     res.status(500).json({ error: 'Failed to retrieve bill detail' });
   }
 });
@@ -29,8 +29,8 @@ router.get('/:congress/:type/:number/text', async (req: Request, res: Response) 
   try {
     const textVersions = await getBillText(congress, type.toLowerCase(), number);
     res.json({ textVersions });
-  } catch (err) {
-    console.error(`GET /api/bill/${congress}/${type}/${number}/text error:`, err);
+  } catch (error) {
+    console.error(`GET /api/bill/${congress}/${type}/${number}/text error:`, error);
     res.status(500).json({ error: 'Failed to retrieve bill text' });
   }
 });

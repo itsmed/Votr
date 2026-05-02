@@ -1,3 +1,4 @@
+// eslint-disable-next-line n/no-missing-import
 import pool from '../db';
 import { CURRENT_CONGRESS } from '../constants';
 
@@ -46,17 +47,17 @@ async function getCachedBills(): Promise<DbBill[]> {
 }
 
 function mapApiBill(apiBill: ApiBill): Omit<DbBill, 'id'> {
-  const typeStr = (apiBill.type ?? '').toLowerCase();
+  const typeString = (apiBill.type ?? '').toLowerCase();
   return {
     title: apiBill.title ?? 'Untitled',
     origin_chamber: apiBill.originChamber ?? null,
     bill_type: apiBill.type ?? null,
-    bill_number: apiBill.number != null ? String(apiBill.number) : null,
+    bill_number: apiBill.number == null ? null : String(apiBill.number),
     congress_number: apiBill.congress ?? null,
     latest_action_text: apiBill.latestAction?.text ?? null,
     latest_action_date: apiBill.latestAction?.actionDate ?? null,
     update_date: apiBill.updateDate ?? null,
-    api_id: `${apiBill.congress}/${typeStr}/${apiBill.number}`,
+    api_id: `${apiBill.congress}/${typeString}/${apiBill.number}`,
     url: apiBill.url ?? null,
   };
 }

@@ -4,8 +4,8 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-pool.on('error', (err) => {
-  console.error('Unexpected database pool error', err);
+pool.on('error', (error) => {
+  console.error('Unexpected database pool error', error);
 });
 
 export default pool;

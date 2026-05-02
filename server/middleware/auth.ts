@@ -8,8 +8,9 @@ const COOKIE_MAX_AGE = 365 * 24 * 60 * 60 * 1000;
 
 async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    // eslint-disable-next-line security/detect-object-injection
     const cookieValue = req.cookies[COOKIE_NAME];
-    let userId: number | undefined = typeof cookieValue === 'string' ? Number.parseInt(cookieValue, 10) : undefined;
+    let userId: number | undefined = Number.parseInt(cookieValue, 10);
     if (Number.isNaN(userId)) {
       userId = undefined;
     }
@@ -24,10 +25,11 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction): 
         return;
       }
       userId = rows[0].id as number;
-      res.cookie(COOKIE_NAME, userId, {
+      res.cookie(COOKIE_NAME, String(userId), {
         httpOnly: true,
         maxAge: COOKIE_MAX_AGE,
-        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
       });
     }
 

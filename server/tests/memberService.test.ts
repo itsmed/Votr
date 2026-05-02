@@ -3,7 +3,7 @@ jest.mock('../db', () => ({
   connect: jest.fn(),
   on: jest.fn(),
 }));
-
+// eslint-disable-next-line n/no-missing-import
 import pool from '../db';
 import {
   getCachedMembers,
@@ -139,12 +139,12 @@ describe('fetchAndCacheMembers', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env = { ...originalEnv, CONGRESS_API_KEY: 'test-key' };
-    global.fetch = jest.fn() as typeof global.fetch;
+    globalThis.fetch = jest.fn() as typeof globalThis.fetch;
   });
 
   afterEach(() => {
     process.env = originalEnv;
-    delete (global as Record<string, unknown>).fetch;
+    delete (globalThis as Record<string, unknown>).fetch;
   });
 
   test('throws when CONGRESS_API_KEY is missing', async () => {
@@ -156,7 +156,7 @@ describe('fetchAndCacheMembers', () => {
     const apiMember = makeApiMember();
     const dbMember = makeDbMember();
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ members: [apiMember], pagination: { count: 1 } }),
     });
@@ -171,8 +171,8 @@ describe('fetchAndCacheMembers', () => {
 
     const result = await fetchAndCacheMembers();
 
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/member/congress/119'));
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining('/member/congress/119'));
     expect(client.query).toHaveBeenCalledWith('BEGIN');
     expect(client.query).toHaveBeenCalledWith('COMMIT');
     expect(client.release).toHaveBeenCalled();
@@ -183,7 +183,7 @@ describe('fetchAndCacheMembers', () => {
     const member1 = makeApiMember({ bioguideId: 'A000001' });
     const member2 = makeApiMember({ bioguideId: 'B000002', name: 'Baker, Bob' });
 
-    (global.fetch as jest.Mock)
+    (globalThis.fetch as jest.Mock)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ members: [member1], pagination: { count: 2 } }),
@@ -207,12 +207,12 @@ describe('fetchAndCacheMembers', () => {
 
     const result = await fetchAndCacheMembers();
 
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
     expect(result).toHaveLength(2);
   });
 
   test('rolls back transaction on DB error and releases client', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ members: [makeApiMember()], pagination: { count: 1 } }),
     });
@@ -231,12 +231,12 @@ describe('fetchAndCacheMembers', () => {
   });
 
   test('throws on non-ok API response', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 403, statusText: 'Forbidden' });
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 403, statusText: 'Forbidden' });
     await expect(fetchAndCacheMembers()).rejects.toThrow('Congress.gov API error: 403 Forbidden');
   });
 
   test('returns empty array when API returns no members', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ members: [], pagination: { count: 0 } }),
     });
@@ -252,11 +252,11 @@ describe('getMembers', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.CONGRESS_API_KEY = 'test-key';
-    global.fetch = jest.fn() as typeof global.fetch;
+    globalThis.fetch = jest.fn() as typeof globalThis.fetch;
   });
 
   afterEach(() => {
-    delete (global as Record<string, unknown>).fetch;
+    delete (globalThis as Record<string, unknown>).fetch;
   });
 
   test('returns cache when members exist in DB', async () => {
@@ -267,14 +267,14 @@ describe('getMembers', () => {
 
     expect(result.source).toBe('cache');
     expect(result.members).toEqual(cached);
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   test('calls API and returns members when DB is empty', async () => {
     mockPool.query.mockResolvedValueOnce({ rows: [] } as never);
 
     const dbMember = makeDbMember();
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ members: [makeApiMember()], pagination: { count: 1 } }),
     });
@@ -302,12 +302,12 @@ describe('getMemberDetail', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env = { ...originalEnv, CONGRESS_API_KEY: 'test-key' };
-    global.fetch = jest.fn() as typeof global.fetch;
+    globalThis.fetch = jest.fn() as typeof globalThis.fetch;
   });
 
   afterEach(() => {
     process.env = originalEnv;
-    delete (global as Record<string, unknown>).fetch;
+    delete (globalThis as Record<string, unknown>).fetch;
   });
 
   test('throws when CONGRESS_API_KEY is missing', async () => {
@@ -316,19 +316,19 @@ describe('getMemberDetail', () => {
   });
 
   test('calls the correct Congress.gov URL with the bioguide ID', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ member: makeApiMember() }),
     });
 
     await getMemberDetail('A000001');
 
-    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/member/A000001'));
+    expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining('/member/A000001'));
   });
 
   test('returns the member object from the API response', async () => {
     const apiMember = makeApiMember();
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ member: apiMember }),
     });
@@ -338,7 +338,7 @@ describe('getMemberDetail', () => {
   });
 
   test('returns null when API response has no member field', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({}),
     });
@@ -348,7 +348,7 @@ describe('getMemberDetail', () => {
   });
 
   test('throws on non-ok response', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 404, statusText: 'Not Found' });
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 404, statusText: 'Not Found' });
     await expect(getMemberDetail('INVALID')).rejects.toThrow('Congress.gov API error: 404 Not Found');
   });
 });

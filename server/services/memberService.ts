@@ -1,3 +1,4 @@
+// eslint-disable-next-line n/no-missing-import
 import pool from '../db';
 import { CURRENT_CONGRESS } from '../constants';
 import type { PoolClient } from 'pg';
@@ -95,9 +96,9 @@ async function fetchAndCacheMembers(): Promise<DbMember[]> {
     }
     await client.query('COMMIT');
     return inserted;
-  } catch (err) {
+  } catch (error) {
     await client.query('ROLLBACK');
-    throw err;
+    throw error;
   } finally {
     client.release();
   }
@@ -141,25 +142,9 @@ async function getMemberAgreement(
 
   let rows: Array<{ agree_count: number; total_count: number }>;
 
-  if (!isSenator) {
-    ({ rows } = await pool.query(
-      `SELECT
-         COUNT(*) FILTER (WHERE
-           (ucv.position = 'Yea' AND vp.position IN ('Yea', 'Aye')) OR
-           (ucv.position = 'Nay' AND vp.position IN ('Nay', 'No'))
-         )::integer AS agree_count,
-         COUNT(*)::integer AS total_count
-       FROM user_congressional_votes ucv
-       JOIN congressional_votes cv ON cv.id = ucv.congressional_vote_id
-       JOIN vote_positions vp ON vp.vote_id = cv.id
-         AND vp.legislator_id = $1
-       WHERE ucv.user_id = $2
-         AND ucv.position IN ('Yea', 'Nay')`,
-      [bioguideId, userId]
-    ));
-  } else {
+  if (isSenator) {
     const lastName = name.split(',')[0].trim();
-    const partyInitial = party.startsWith('Democrat') ? 'D' : party.startsWith('Republican') ? 'R' : 'I';
+    const partyInitial = party.startsWith('Democrat') ? 'D' : (party.startsWith('Republican') ? 'R' : 'I');
 
     ({ rows } = await pool.query(
       `SELECT
@@ -176,6 +161,22 @@ async function getMemberAgreement(
        WHERE ucv.user_id = $3
          AND ucv.position IN ('Yea', 'Nay')`,
       [lastName, partyInitial, userId]
+    ));
+  } else {
+    ({ rows } = await pool.query(
+      `SELECT
+         COUNT(*) FILTER (WHERE
+           (ucv.position = 'Yea' AND vp.position IN ('Yea', 'Aye')) OR
+           (ucv.position = 'Nay' AND vp.position IN ('Nay', 'No'))
+         )::integer AS agree_count,
+         COUNT(*)::integer AS total_count
+       FROM user_congressional_votes ucv
+       JOIN congressional_votes cv ON cv.id = ucv.congressional_vote_id
+       JOIN vote_positions vp ON vp.vote_id = cv.id
+         AND vp.legislator_id = $1
+       WHERE ucv.user_id = $2
+         AND ucv.position IN ('Yea', 'Nay')`,
+      [bioguideId, userId]
     ));
   }
 
@@ -205,25 +206,9 @@ async function getMemberSharedVotes(userId: number, bioguideId: string): Promise
 
   let rows: unknown[];
 
-  if (!isSenator) {
-    ({ rows } = await pool.query(
-      `SELECT
-         cv.vote_id, cv.question, cv.date, cv.category,
-         ucv.position  AS user_position,
-         vp.position   AS member_position,
-         ${agreedExpr} AS agreed
-       FROM user_congressional_votes ucv
-       JOIN congressional_votes cv ON cv.id = ucv.congressional_vote_id
-       JOIN vote_positions vp ON vp.vote_id = cv.id
-         AND vp.legislator_id = $1
-       WHERE ucv.user_id = $2
-         AND ucv.position IN ('Yea', 'Nay')
-       ORDER BY cv.date DESC`,
-      [bioguideId, userId]
-    ));
-  } else {
+  if (isSenator) {
     const lastName = name.split(',')[0].trim();
-    const partyInitial = party.startsWith('Democrat') ? 'D' : party.startsWith('Republican') ? 'R' : 'I';
+    const partyInitial = party.startsWith('Democrat') ? 'D' : (party.startsWith('Republican') ? 'R' : 'I');
 
     ({ rows } = await pool.query(
       `SELECT
@@ -240,6 +225,22 @@ async function getMemberSharedVotes(userId: number, bioguideId: string): Promise
          AND ucv.position IN ('Yea', 'Nay')
        ORDER BY cv.date DESC`,
       [lastName, partyInitial, userId]
+    ));
+  } else {
+    ({ rows } = await pool.query(
+      `SELECT
+         cv.vote_id, cv.question, cv.date, cv.category,
+         ucv.position  AS user_position,
+         vp.position   AS member_position,
+         ${agreedExpr} AS agreed
+       FROM user_congressional_votes ucv
+       JOIN congressional_votes cv ON cv.id = ucv.congressional_vote_id
+       JOIN vote_positions vp ON vp.vote_id = cv.id
+         AND vp.legislator_id = $1
+       WHERE ucv.user_id = $2
+         AND ucv.position IN ('Yea', 'Nay')
+       ORDER BY cv.date DESC`,
+      [bioguideId, userId]
     ));
   }
 

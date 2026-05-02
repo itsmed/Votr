@@ -2,6 +2,7 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import AppleStrategy from 'passport-apple';
+// eslint-disable-next-line n/no-missing-import
 import pool from '../../db';
 
 const router = express.Router();
@@ -34,8 +35,8 @@ passport.use(
         if (!email) return done(new Error('No email returned from Google'));
         const id = await findOrCreateUser({ email, name: profile.displayName });
         done(null, id as unknown as Express.User);
-      } catch (err) {
-        done(err as Error);
+      } catch (error) {
+        done(error as Error);
       }
     }
   )
@@ -60,8 +61,8 @@ passport.use(
           : email;
         const id = await findOrCreateUser({ email, name });
         done(null, id);
-      } catch (err) {
-        done(err as Error);
+      } catch (error) {
+        done(error as Error);
       }
     }
   )
@@ -162,8 +163,8 @@ router.patch('/me', async (req: Request, res: Response, next: NextFunction) => {
       ]
     );
     res.json({ user: rows[0] });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -185,8 +186,8 @@ router.get('/me/reps', async (req: Request, res: Response, next: NextFunction) =
     const representatives = rows.filter((m: { id: number }) => repIds.includes(m.id));
 
     res.json({ senators, representatives });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -201,8 +202,8 @@ router.get('/me/saved-members', async (req: Request, res: Response, next: NextFu
       [req.user.id]
     );
     res.json({ members: rows });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -215,8 +216,8 @@ router.post('/me/saved-members/:memberId', async (req: Request, res: Response, n
       [req.user.id, req.params.memberId]
     );
     res.json({ ok: true });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -228,8 +229,8 @@ router.delete('/me/saved-members/:memberId', async (req: Request, res: Response,
       [req.user.id, req.params.memberId]
     );
     res.json({ ok: true });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 });
 

@@ -31,8 +31,8 @@ async function setup(): Promise<void> {
 }
 
 setup()
-  .catch((err: Error) => {
-    console.error('Setup failed:', err.message);
+  .catch((error: Error) => {
+    console.error('Setup failed:', error.message);
     process.exit(1);
   })
   .finally(() => pool.end());

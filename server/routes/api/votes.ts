@@ -14,8 +14,8 @@ router.get('/', async (req: Request, res: Response) => {
 
     const { votes, total } = await getVotes({ limit, offset, chamber });
     res.json({ total, limit, offset, chamber: chamber ?? null, votes });
-  } catch (err) {
-    console.error('GET /api/votes error:', err);
+  } catch (error) {
+    console.error('GET /api/votes error:', error);
     res.status(500).json({ error: 'Failed to retrieve votes' });
   }
 });
@@ -26,8 +26,8 @@ router.get('/:voteId', async (req: Request, res: Response) => {
     const result = await getVoteDetail(req.params.voteId, chamber);
     if (!result) return res.status(404).json({ error: 'Vote not found' });
     res.json(result);
-  } catch (err) {
-    console.error('GET /api/votes/:voteId error:', err);
+  } catch (error) {
+    console.error('GET /api/votes/:voteId error:', error);
     res.status(500).json({ error: 'Failed to retrieve vote detail' });
   }
 });
@@ -37,8 +37,8 @@ router.get('/:voteId/user-vote', async (req: Request, res: Response) => {
   try {
     const vote = await getUserCongressionalVote(req.user.id, req.params.voteId);
     res.json({ vote });
-  } catch (err) {
-    console.error('GET /api/votes/:voteId/user-vote error:', err);
+  } catch (error) {
+    console.error('GET /api/votes/:voteId/user-vote error:', error);
     res.status(500).json({ error: 'Failed to retrieve user vote' });
   }
 });
@@ -52,12 +52,12 @@ router.post('/:voteId/user-vote', async (req: Request, res: Response, next: Next
   try {
     const vote = await upsertUserCongressionalVote(req.user.id, req.params.voteId, position);
     res.json({ vote });
-  } catch (err) {
-    if ((err as { status?: number }).status === 404) {
+  } catch (error) {
+    if ((error as { status?: number }).status === 404) {
       return res.status(404).json({ error: 'Vote not found' });
     }
-    console.error('POST /api/votes/:voteId/user-vote error:', err);
-    next(err);
+    console.error('POST /api/votes/:voteId/user-vote error:', error);
+    next(error);
   }
 });
 

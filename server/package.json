@@ -30,8 +30,12 @@
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.20.0"
   },
+  "engines": {
+    "node": ">=18"
+  },
   "devDependencies": {
     "@eslint/js": "^9",
+    "globals": "^15",
     "@types/cookie-parser": "^1",
     "@types/cors": "^2.8.19",
     "@types/debug": "^4",

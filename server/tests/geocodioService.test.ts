@@ -106,12 +106,12 @@ describe('findLegislators', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env = { ...originalEnv, GEOCOD_API_KEY: 'test-key' };
-    global.fetch = jest.fn() as typeof global.fetch;
+    globalThis.fetch = jest.fn() as typeof globalThis.fetch;
   });
 
   afterEach(() => {
     process.env = originalEnv;
-    delete (global as Record<string, unknown>).fetch;
+    delete (globalThis as Record<string, unknown>).fetch;
   });
 
   test('throws when GEOCOD_API_KEY is missing', async () => {
@@ -120,22 +120,22 @@ describe('findLegislators', () => {
   });
 
   test('calls Geocodio with cd119 field and returns mapped legislators', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ results: [makeGeocodioResult()] }),
     });
 
     const result = await findLegislators('1109 N Highland St, Arlington VA');
 
-    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('cd119'));
-    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('geocode'));
+    expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining('cd119'));
+    expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining('geocode'));
     expect(result.address).toBe('1109 N Highland St, Arlington, VA 22201');
     expect(result.state).toBe('VA');
     expect(result.legislators).toHaveLength(2);
   });
 
   test('returns one representative and one senator', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ results: [makeGeocodioResult()] }),
     });
@@ -152,12 +152,12 @@ describe('findLegislators', () => {
   });
 
   test('throws on non-ok API response', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 422, statusText: 'Unprocessable Entity' });
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 422, statusText: 'Unprocessable Entity' });
     await expect(findLegislators('bad address')).rejects.toThrow('Geocodio API error: 422 Unprocessable Entity');
   });
 
   test('throws when no results returned', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ results: [] }),
     });
@@ -168,7 +168,7 @@ describe('findLegislators', () => {
     const resultWithNoDistrict = makeGeocodioResult({
       fields: { congressional_districts: [] },
     });
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ results: [resultWithNoDistrict] }),
     });
@@ -197,7 +197,7 @@ describe('findLegislators', () => {
       },
     });
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ results: [resultWithTwo] }),
     });
@@ -207,14 +207,14 @@ describe('findLegislators', () => {
   });
 
   test('encodes address in query string', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ results: [makeGeocodioResult()] }),
     });
 
     await findLegislators('123 Main St, Springfield IL');
 
-    const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
+    const calledUrl = (globalThis.fetch as jest.Mock).mock.calls[0][0] as string;
     expect(calledUrl).toContain('123+Main+St');
   });
 });

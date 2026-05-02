@@ -1,3 +1,4 @@
+// eslint-disable-next-line n/no-missing-import  
 import pool from '../db';
 
 interface HttpError extends Error {

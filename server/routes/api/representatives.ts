@@ -13,15 +13,15 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const result = await findLegislators(address.trim());
     res.json(result);
-  } catch (err) {
-    const message = (err as Error).message;
+  } catch (error) {
+    const message = (error as Error).message;
     if (
       message === 'Address not found' ||
       message === 'No congressional district found for this address'
     ) {
       return res.status(404).json({ error: message });
     }
-    console.error('GET /find-representative-and-senator error:', err);
+    console.error('GET /find-representative-and-senator error:', error);
     res.status(500).json({ error: 'Failed to find representatives' });
   }
 });

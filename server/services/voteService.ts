@@ -1,3 +1,4 @@
+// eslint-disable-next-line n/no-missing-import
 import pool from '../db';
 
 interface GetVotesOptions {
@@ -81,7 +82,9 @@ async function getVoteDetail(
   const positions: Record<string, unknown[]> = {};
   for (const row of positionsResult.rows as Array<{ position: string } & Record<string, unknown>>) {
     const { position, ...legislator } = row;
+    // eslint-disable-next-line security/detect-object-injection
     if (!positions[position]) positions[position] = [];
+    // eslint-disable-next-line security/detect-object-injection
     positions[position].push(legislator);
   }
 
