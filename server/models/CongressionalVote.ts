@@ -1,31 +1,7 @@
-'use strict';
+import type { Pool } from 'pg';
 
 const tableName = 'congressional_votes';
 
-/**
- * Stores one roll-call vote record per row.
- *
- * Subject columns are mutually exclusive — at most one of the three groups
- * (bill_*, nomination_*, amendment_*) will be populated for any given row:
- *
- *   Bill/resolution vote  → bill_congress, bill_number, bill_type, bill_title
- *   Nomination vote       → nomination_number, nomination_title
- *   Amendment vote        → bill_* columns + amendment_number, amendment_type,
- *                           amendment_author
- *   Procedural vote       → all subject columns NULL
- *
- * Bill types stored in bill_type:
- *   hr       H.R.        House bill
- *   hres     H.Res.      House simple resolution
- *   hjres    H.J.Res.    House joint resolution
- *   hconres  H.Con.Res.  House concurrent resolution
- *   s        S.          Senate bill
- *   sres     S.Res.      Senate simple resolution
- *   sjres    S.J.Res.    Senate joint resolution
- *   sconres  S.Con.Res.  Senate concurrent resolution
- *
- * Individual member positions are normalised into the vote_positions table.
- */
 const createSQL = `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     id                 SERIAL PRIMARY KEY,
@@ -74,12 +50,8 @@ const createSQL = `
   );
 `;
 
-/**
- * Creates the congressional_votes table if it does not already exist.
- * @param {import('pg').Pool} pool
- */
-async function createTable(pool) {
+async function createTable(pool: Pool): Promise<void> {
   await pool.query(createSQL);
 }
 
-module.exports = { tableName, createSQL, createTable };
+export { tableName, createSQL, createTable };

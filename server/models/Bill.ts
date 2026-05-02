@@ -1,4 +1,4 @@
-'use strict';
+import type { Pool } from 'pg';
 
 const tableName = 'bills';
 
@@ -21,12 +21,8 @@ const createSQL = `
   );
 `;
 
-/**
- * Creates the bills table if it does not already exist.
- * @param {import('pg').Pool} pool
- */
-async function createTable(pool) {
+async function createTable(pool: Pool): Promise<void> {
   await pool.query(createSQL);
 }
 
-module.exports = { tableName, createSQL, createTable };
+export { tableName, createSQL, createTable };

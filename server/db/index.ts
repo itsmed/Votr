@@ -1,6 +1,4 @@
-'use strict';
-
-const { Pool } = require('pg');
+import { Pool } from 'pg';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -10,4 +8,4 @@ pool.on('error', (err) => {
   console.error('Unexpected database pool error', err);
 });
 
-module.exports = pool;
+export default pool;
