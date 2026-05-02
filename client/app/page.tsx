@@ -11,9 +11,7 @@ import {
   textPrimary,
   textMuted,
   textFaint,
-  textLink,
   feedback,
-  borderBase,
 } from '@votr/shared';
 
 function GoogleIcon() {
@@ -78,8 +76,8 @@ function RepsResults({ result }: { result: FindRepsResponse }) {
       </div>
 
       <div className={`rounded-xl border border-blue-100 dark:border-blue-900 bg-blue-50 dark:bg-blue-950 px-6 py-5`}>
-        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-          Want to vote on bills and see how your views compare to your representatives'?
+        <p className='text-sm font-medium text-blue-900 dark:text-blue-100'>
+          Want to vote on bills and see how your views compare to your representatives&apos;?
         </p>
         <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
           Sign up to track your voting history and hold your reps accountable.
