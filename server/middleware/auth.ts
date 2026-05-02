@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+// eslint-disable-next-line n/no-missing-import
 import pool from '../db';
 
 const DEV_USER_EMAIL = 'dev@local.dev';
@@ -7,7 +8,11 @@ const COOKIE_MAX_AGE = 365 * 24 * 60 * 60 * 1000;
 
 async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    let userId: number | undefined = req.cookies[COOKIE_NAME] as number | undefined;
+    const cookieValue = req.cookies[COOKIE_NAME];
+    let userId: number | undefined = typeof cookieValue === 'string' ? Number.parseInt(cookieValue, 10) : undefined;
+    if (Number.isNaN(userId)) {
+      userId = undefined;
+    }
 
     if (!userId && process.env.NODE_ENV !== 'production') {
       const { rows } = await pool.query(
@@ -37,8 +42,8 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction): 
     }
 
     next();
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 }
 
