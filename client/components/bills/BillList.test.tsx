@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import BillList from './BillList';
 import { vi } from 'vitest';
+import { type Bill } from '@votr/shared';
 
 vi.mock('@votr/shared', () => ({
   feedback: { loadingText: 'loading' },
@@ -10,7 +11,7 @@ vi.mock('@votr/shared', () => ({
 
 vi.mock('./BillCard', () => ({
   __esModule: true,
-  default: ({ bill }: any) => <div>{bill.title}</div>,
+  default: ({ bill }: { bill: Bill }) => <div>{bill.title}</div>,
 }));
 
 test('renders empty message when no bills', () => {
@@ -31,7 +32,7 @@ test('renders list of bills', () => {
 
   render(
     <MemoryRouter>
-      <BillList bills={bills as any} />
+      <BillList bills={bills as unknown as Bill[]} />
     </MemoryRouter>
   );
 

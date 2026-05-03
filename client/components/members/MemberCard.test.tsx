@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import MemberCard from './MemberCard';
 import { vi } from 'vitest';
+import { type Member } from '@votr/shared';
 
 vi.mock('@votr/shared', () => ({
   partyBadge: { D: 'dem-badge', R: 'rep-badge' },
@@ -21,7 +22,7 @@ test('renders member card with district and role', () => {
     role: 'Representative',
     party: 'D',
     photo_url: null,
-  } as any;
+  } as unknown as Member;
 
   render(
     <MemoryRouter>

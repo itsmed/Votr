@@ -7,7 +7,9 @@ import NavBar from './NavBar';
 import { vi } from 'vitest';
 
 // Mutable test state so different tests can control mocked hooks
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let userContext: any = { user: { name: 'Test User' }, isLoading: false };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let myReps: any = { data: null };
 const setThemeMock = vi.fn();
 const navigateMock = vi.fn();
@@ -123,7 +125,6 @@ test('logout calls API, clears queries and navigates home', async () => {
 
   // Spy on fetch
   const fetchMock = vi.fn(() => Promise.resolve(new Response(null, { status: 200 })));
-  // @ts-ignore
   global.fetch = fetchMock;
 
   const qc = new QueryClient();

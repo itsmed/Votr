@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import VotePreview from './VotePreview';
 import { vi } from 'vitest';
+import { type VoteRow } from '@votr/shared';
 
 vi.mock('@votr/shared', () => ({
   chamberBadgeByCode: { h: 'house-badge', s: 'senate-badge' },
@@ -21,7 +22,7 @@ test('renders vote preview with chamber and date', () => {
     chamber: 'h',
     date: '2023-05-01T00:00:00Z',
     result: 'Passed',
-  } as any;
+  } as unknown as VoteRow;
 
   render(
     <MemoryRouter>

@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import BillCard from './BillCard';
 import { vi } from 'vitest';
+import { type Bill } from '@votr/shared';
 
 vi.mock('@votr/shared', () => ({
   badge: { neutral: 'neutral' },
@@ -26,7 +27,7 @@ test('renders bill card with labels and latest action', () => {
     latest_action_text: 'Referred to committee',
     latest_action_date: '2023-01-15T00:00:00Z',
     update_date: '2023-02-01T00:00:00Z',
-  } as any;
+  } as unknown as Bill;
 
   render(
     <MemoryRouter>
