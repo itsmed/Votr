@@ -38,7 +38,7 @@ vi.mock('@votr/shared', () => ({
 
 // Mock react-router's useNavigate to capture navigation calls
 vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
+  const actual = (await vi.importActual('react-router-dom')) as Record<string, unknown>;
   return {
     ...actual,
     useNavigate: () => navigateMock,
